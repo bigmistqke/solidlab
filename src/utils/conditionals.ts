@@ -1,4 +1,4 @@
-import { Accessor, Resource } from 'solid-js'
+import { Accessor, createEffect } from 'solid-js'
 
 export function once<
   T,
@@ -116,8 +116,9 @@ export function every<
   return callback
 }
 
-export function wrapNullableResource<T extends Resource<any>>(
-  value: T,
-): Accessor<false | [ReturnType<T>]> {
-  return () => value.state === 'ready' && [value()]
+export function whenEffect<T>(
+  value: Accessor<T>,
+  callback: (value: Exclude<T, false | null | undefined>) => void,
+) {
+  createEffect(when(value, value => callback(value)))
 }

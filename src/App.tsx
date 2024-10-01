@@ -7,14 +7,15 @@ import {
   createSignal,
   For,
   onMount,
+  Resource,
   Show,
-  Suspense,
   useContext,
 } from 'solid-js'
 import styles from './App.module.css'
 import { Codicon } from './codicon/codicon'
 import { CodiconButton } from './codicon/codicon-button'
 import { files } from './files'
+import { every, whenEffect } from './utils/conditionals'
 
 function getNameFromPath(path: string) {
   const segments = path.split('/')
@@ -28,8 +29,14 @@ function Tab(props: { path: string }) {
       class={clsx(styles.tab, repl.focusedTab() === props.path && styles.selected)}
       ref={element => onMount(() => element.scrollIntoView())}
     >
-      <button onClick={() => repl.focusTab(props.path)}>{getNameFromPath(props.path)}</button>
-      <CodiconButton kind="close" onClick={() => repl.closeTab(props.path)} />
+      <button class={styles.focusTabButton} onClick={() => repl.focusTab(props.path)}>
+        {getNameFromPath(props.path)}
+      </button>
+      <CodiconButton
+        class={styles.closeTabButton}
+        kind="close"
+        onClick={() => repl.closeTab(props.path)}
+      />
     </span>
   )
 }
@@ -48,19 +55,22 @@ function Tabs() {
 function EditorPane(props: { tabs: string[] }) {
   const repl = useRepl()
   const container = useWebContainer()
-  const [source] = createResource(repl.focusedTab, path => container.fs.readFile(path, 'utf-8'))
+  const [source] = createResource(every(repl.focusedTab, container), ([path, container]) =>
+    container.fs.readFile(path, 'utf-8'),
+  )
   return (
     <div class={styles.editorPane}>
       <Tabs />
-      <Suspense fallback={<div style={{ flex: 1 }}>loading</div>}>
+      <Show
+        when={source() !== undefined}
+        fallback={<div class={styles.suspenseMessage}>Loading File!</div>}
+      >
         <textarea
           class={styles.textarea}
-          onInput={e => {
-            container.fs.writeFile(repl.focusedTab(), e.currentTarget.value)
-          }}
+          onInput={e => container()!.fs.writeFile(repl.focusedTab(), e.currentTarget.value)}
           value={source()}
         />
-      </Suspense>
+      </Show>
     </div>
   )
 }
@@ -104,7 +114,10 @@ function Directory(props: { path: string; layer: number; open?: boolean }) {
 
 Directory.Contents = (props: { path: string; layer: number }) => {
   const container = useWebContainer()
-  const [contents] = createResource(() => container.fs.readdir(props.path, { withFileTypes: true }))
+  const [contents] = createResource(container, container =>
+    container.fs.readdir(props.path, { withFileTypes: true }),
+  )
+
   return (
     <For each={contents()}>
       {file => (
@@ -119,11 +132,17 @@ Directory.Contents = (props: { path: string; layer: number }) => {
   )
 }
 
-function Explorer(props: { path: string }) {
+function Explorer() {
+  const container = useWebContainer()
   return (
-    <div class={styles.fileExplorer}>
-      <Directory.Contents path="" layer={0} />
-    </div>
+    <Show
+      when={!container.loading}
+      fallback={<div class={clsx(styles.suspenseMessage, styles.explorer)}>Loading!</div>}
+    >
+      <div class={styles.explorer}>
+        <Directory.Contents path="" layer={0} />
+      </div>
+    </Show>
   )
 }
 
@@ -143,14 +162,11 @@ function useRepl() {
   return context
 }
 
-function Repl() {
+function Frame() {
+  const [url, setUrl] = createSignal<string>()
   const container = useWebContainer()
 
-  const [tabs, setTabs] = createSignal<string[]>(['/src/app.tsx'])
-  const [url, setUrl] = createSignal<string>()
-  const [focusedTab, setFocusedTab] = createSignal<string>('/src/app.tsx')
-
-  onMount(async () => {
+  const [packagesInstalled] = createResource(container, async container => {
     container.on('server-ready', (port, url) => setUrl(url))
     const installProcess = await container.spawn('npm', ['install'])
     installProcess.output.pipeTo(
@@ -161,8 +177,33 @@ function Repl() {
       }),
     )
     await installProcess.exit
-    await container.spawn('npm', ['run', 'dev'])
+    return true
   })
+
+  whenEffect(every(container, packagesInstalled), ([container]) =>
+    container.spawn('npm', ['run', 'dev']),
+  )
+
+  const loadingMessage = () => {
+    if (!container()) return 'Loading Web Container!'
+    if (!packagesInstalled()) return 'Installing Node Modules!'
+    if (!url()) return 'Initializing Development Server!'
+    return undefined
+  }
+
+  return (
+    <Show
+      when={!loadingMessage()}
+      fallback={<div class={clsx(styles.suspenseMessage, styles.frame)}>{loadingMessage()}</div>}
+    >
+      <iframe src={url()} class={styles.frame} />
+    </Show>
+  )
+}
+
+function Repl() {
+  const [tabs, setTabs] = createSignal<string[]>(['/src/app.tsx'])
+  const [focusedTab, setFocusedTab] = createSignal<string>('/src/app.tsx')
 
   return (
     <ReplContext.Provider
@@ -187,16 +228,16 @@ function Repl() {
         tabs,
       }}
     >
-      <div class={styles.Repl} style={{ '--file-explorer-width': '200px' }}>
-        <Explorer path="" />
+      <div class={styles.Repl} style={{ '--explorer-width': '200px' }}>
+        <Explorer />
         <EditorPane tabs={tabs()} />
-        <iframe src={url()} class={styles.frame} />
+        <Frame />
       </div>
     </ReplContext.Provider>
   )
 }
 
-const WebContainerContext = createContext<WebContainer>()
+const WebContainerContext = createContext<Resource<WebContainer>>()
 export const useWebContainer = () => {
   const context = useContext(WebContainerContext)
   if (!context) {
@@ -213,11 +254,9 @@ function App() {
   })
 
   return (
-    <Show when={webContainer()}>
-      <WebContainerContext.Provider value={webContainer()!}>
-        <Repl />
-      </WebContainerContext.Provider>
-    </Show>
+    <WebContainerContext.Provider value={webContainer}>
+      <Repl />
+    </WebContainerContext.Provider>
   )
 }
 
