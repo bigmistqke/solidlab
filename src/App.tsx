@@ -3,7 +3,6 @@ import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { Terminal as TerminalInstance } from '@xterm/xterm'
 import '@xterm/xterm/css/xterm.css'
-
 import clsx from 'clsx'
 import {
   Accessor,
@@ -16,6 +15,8 @@ import {
   Show,
   useContext,
 } from 'solid-js'
+import { TmTextarea } from 'tm-textarea/solid'
+import { Grammar } from 'tm-textarea/tm'
 import styles from './App.module.css'
 import { Codicon } from './codicon/codicon'
 import { CodiconButton } from './codicon/codicon-button'
@@ -95,6 +96,26 @@ function Tabs() {
   )
 }
 
+const getTypeFromPath = (path: string): Grammar => {
+  const extension = path.split('.').pop()
+  switch (extension) {
+    case 'tsx':
+      return 'tsx'
+    case 'ts':
+      return 'typescript'
+    case 'js':
+      return 'javascript'
+    case 'jsx':
+      return 'jsx'
+    case 'json':
+      return 'json'
+    case 'css':
+      return 'css'
+    default:
+      return 'tsx'
+  }
+}
+
 function EditorPane(props: { tabs: string[] }) {
   const repl = useRepl()
   const container = useWebContainer()
@@ -108,10 +129,12 @@ function EditorPane(props: { tabs: string[] }) {
         when={source() !== undefined}
         fallback={<div class={styles.suspenseMessage}>Loading File!</div>}
       >
-        <textarea
+        <TmTextarea
           class={styles.textarea}
           onInput={e => container()!.fs.writeFile(repl.focusedTab(), e.currentTarget.value)}
-          value={source()}
+          value={source() || ''}
+          theme="vitesse-light"
+          grammar={getTypeFromPath(repl.focusedTab())}
         />
       </Show>
     </div>
@@ -144,7 +167,7 @@ function Directory(props: { path: string; layer: number; open?: boolean }) {
         <Codicon
           style={{ width: `var(--explorer-layer-offset)` }}
           as="span"
-          kind={open() ? 'chevron-down' : 'chevron-up'}
+          kind={open() ? 'chevron-down' : 'chevron-right'}
         />
         {getNameFromPath(props.path)}
       </button>
@@ -251,7 +274,11 @@ function Frame() {
       when={!loadingMessage()}
       fallback={<div class={clsx(styles.suspenseMessage, styles.frame)}>{loadingMessage()}</div>}
     >
-      <iframe src={url()} class={styles.frame} onError={console.error} />
+      <iframe
+        src={url()}
+        class={styles.frame}
+        onError={error => console.error('IFRAME ERRORS!!!', error)}
+      />
     </Show>
   )
 }

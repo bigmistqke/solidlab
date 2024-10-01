@@ -97,6 +97,24 @@
     border: none;
     padding: var(--margin);
   }
+
+  & .textarea {
+    --line-number-width: calc((var(--tm-line-digits) + 1) * 1ch);
+  }
+
+  & .textarea pre::before {
+    position: absolute;
+    transform: translateX(calc(var(--line-number-width) * -1));
+    opacity: 0.5;
+    counter-reset: line-number calc(var(--tm-line-number) + 1);
+    content: counter(line-number);
+    color: var(--tm-foreground-color);
+  }
+
+  & .textarea pre,
+  & .textarea textarea {
+    transform: translateX(var(--line-number-width));
+  }
 }
 
 .suspenseMessage {
