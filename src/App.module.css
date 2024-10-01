@@ -1,9 +1,72 @@
-.App {
+button {
+  border: none;
+  background-color: transparent;
+  font-size: inherit;
+}
+
+.Repl {
+  --explorer-layer-offset: 20px;
   display: flex;
   flex-direction: row;
   height: 100vh;
+  scrollbar-color: rgb(168, 168, 168) rgba(255, 255, 255, 0);
+  scrollbar-width: thin;
 }
 
-.App > * {
+.Repl > * {
   flex: 1;
+}
+
+.frame {
+  border: none;
+  border-left: 1px solid black;
+}
+
+.fileExplorer {
+  display: grid;
+  flex: 0 var(--file-explorer-width);
+  align-content: baseline;
+  overflow: auto;
+
+  & button {
+    display: flex;
+    align-items: center;
+    padding-left: calc(var(--explorer-layer) * var(--explorer-layer-offset));
+    text-align: left;
+    white-space: nowrap;
+  }
+}
+
+.tabsContainer {
+  border-bottom: 1px solid black;
+  overflow: auto;
+}
+
+.tabs {
+  display: flex;
+  min-height: 24px;
+  white-space: nowrap;
+
+  & .tab {
+    display: flex;
+    gap: 5px;
+    padding: 0px 5px;
+    font-size: 10pt;
+
+    &.selected {
+      background-color: darkgrey;
+    }
+  }
+}
+
+.editorPane {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid black;
+  overflow: hidden;
+
+  & .textarea {
+    flex: 1;
+    border: none;
+  }
 }
