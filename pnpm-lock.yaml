@@ -24,9 +24,6 @@ importers:
       vite:
         specifier: ^5.0.11
         version: 5.0.11
-      vite-plugin-cross-origin-isolation:
-        specifier: ^0.1.6
-        version: 0.1.6
       vite-plugin-solid:
         specifier: ^2.8.2
         version: 2.8.2(solid-js@1.8.11)(vite@5.0.11)
@@ -732,9 +729,6 @@ packages:
 
   validate-html-nesting@1.2.2:
     resolution: {integrity: sha512-hGdgQozCsQJMyfK5urgFcWEqsSSrK63Awe0t/IMR0bZ0QMtnuaiHzThW81guu3qx9abLi99NEuiaN6P9gVYsNg==}
-
-  vite-plugin-cross-origin-isolation@0.1.6:
-    resolution: {integrity: sha512-OY0naW9nPUDrKTffYnY7FRYXOgZdHoNwMGpPxUmj/n32mGZi01fcq+J536jkmwGWX7DLT95XBQVHHbrAJzTvrw==}
 
   vite-plugin-solid@2.8.2:
     resolution: {integrity: sha512-HcvMs6DTxBaO4kE3psnirPQBCUUdYeQkCNKuB2TpEkJsxb6BGP6/7qkbbCSMxn25PyNdjvzVi1WXi0ou8KPgHw==}
@@ -1465,8 +1459,6 @@ snapshots:
       picocolors: 1.0.0
 
   validate-html-nesting@1.2.2: {}
-
-  vite-plugin-cross-origin-isolation@0.1.6: {}
 
   vite-plugin-solid@2.8.2(solid-js@1.8.11)(vite@5.0.11):
     dependencies:

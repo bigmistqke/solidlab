@@ -5,22 +5,27 @@ import { files } from './files'
 import { when } from './utils/conditionals'
 
 const App: Component = () => {
-  const [path, setPath] = createSignal('src/index.js')
-
-  const [source, setSource] = createSignal<string>(files['src'].directory['index.js'].file.contents)
+  const [path, setPath] = createSignal('src/app.tsx')
+  const [url, setUrl] = createSignal<string>()
+  const [source, setSource] = createSignal<string>(files['src'].directory['app.tsx'].file.contents)
 
   const [webContainer] = createResource(async () => {
     const container = await WebContainer.boot()
     await container.mount(files)
 
-    return {
-      startDevServer(): Promise<string> {
-        return new Promise(async resolve => {
-          // Run `npm run start` to start the Express app
-          await container.spawn('npm', ['run', 'start'])
+    const api = {
+      async startDevServer() {
+        // Run `npm run start` to start the Express app
+        const process = await container.spawn('npm', ['run', 'dev'])
 
-          // Wait for `server-ready` event
-          container.on('server-ready', (port, url) => resolve(url))
+        console.log('spawned command', process)
+
+        container.on('error', console.error)
+        container.on('preview-message', console.info)
+        // Wait for `server-ready` event
+        container.on('server-ready', (port, url) => {
+          console.log('port is ', port, url)
+          setUrl(url)
         })
       },
 
@@ -37,22 +42,25 @@ const App: Component = () => {
         // Wait for install command to exit
         return installProcess.exit
       },
-
-      writeFile(path: string, content: string) {
-        return container.fs.writeFile(path, content)
-      },
+      fs: container.fs,
     }
-  })
 
-  const [url] = createResource(webContainer, async container => {
-    const exitCode = await container.installDependencies()
+    const exitCode = await api.installDependencies()
     if (exitCode !== 0) {
       throw new Error('Installation failed')
     }
-    return container.startDevServer()
+    await api.startDevServer()
+
+    return api
   })
 
-  createEffect(when(webContainer, container => container.writeFile(path(), source())))
+  createEffect(when(webContainer, container => container.fs.writeFile(path(), source())))
+
+  createEffect(
+    when(webContainer, async container =>
+      console.log(await container.fs.readFile(path(), 'utf-8')),
+    ),
+  )
 
   createEffect(() => console.log(url()))
 

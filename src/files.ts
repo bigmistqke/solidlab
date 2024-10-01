@@ -1,41 +1,53 @@
 import { FileSystemTree } from '@webcontainer/api'
 
+// src
+import app from './bare/src/app?raw'
+import entryClient from './bare/src/entry-client?raw'
+import entryServer from './bare/src/entry-server?raw'
+import global from './bare/src/global.d.ts?raw'
+
+import appConfig from './bare/app.config?raw'
+import packageJson from './bare/package.json?raw'
+import tsConfig from './bare/tsconfig.json?raw'
+
 export const files: FileSystemTree = {
   src: {
     directory: {
-      'index.js': {
+      'app.tsx': {
         file: {
-          contents: `
-import express from 'express';
-const app = express();
-const port = 3111;
-
-app.get('/', (req, res) => {
-  res.send('Welcome to a WebContainers app! 🥳');
-});
-
-app.listen(port, () => {
-  console.log(\`App is live at http://localhost:\${port}\`);
-});`,
+          contents: app,
+        },
+      },
+      'entry-client.tsx': {
+        file: {
+          contents: entryClient,
+        },
+      },
+      'entry-server.tsx': {
+        file: {
+          contents: entryServer,
+        },
+      },
+      'global.d.ts': {
+        file: {
+          contents: global,
         },
       },
     },
   },
-
+  'app.config.ts': {
+    file: {
+      contents: appConfig,
+    },
+  },
   'package.json': {
     file: {
-      contents: `
-        {
-          "name": "example-app",
-          "type": "module",
-          "dependencies": {
-            "express": "latest",
-            "nodemon": "latest"
-          },
-          "scripts": {
-            "start": "nodemon src/index.js"
-          }
-        }`,
+      contents: packageJson,
+    },
+  },
+  'tsconfig.json': {
+    file: {
+      contents: tsConfig,
     },
   },
 }
