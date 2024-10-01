@@ -1,4 +1,9 @@
 import { WebContainer } from '@webcontainer/api'
+import { FitAddon } from '@xterm/addon-fit'
+import { WebLinksAddon } from '@xterm/addon-web-links'
+import { Terminal as TerminalInstance } from '@xterm/xterm'
+import '@xterm/xterm/css/xterm.css'
+
 import clsx from 'clsx'
 import {
   Accessor,
@@ -20,6 +25,44 @@ import { every, whenEffect } from './utils/conditionals'
 function getNameFromPath(path: string) {
   const segments = path.split('/')
   return segments[segments.length - 1]
+}
+
+const terminal = new TerminalInstance({ convertEol: true, fontSize: 10, lineHeight: 1 })
+const fitAddon = new FitAddon()
+terminal.loadAddon(new WebLinksAddon())
+terminal.loadAddon(fitAddon)
+
+function Terminal() {
+  const container = useWebContainer()
+
+  whenEffect(container, async container => {
+    const shellProcess = await container.spawn('jsh')
+    const shellInput = shellProcess.input.getWriter()
+
+    shellProcess.output.pipeTo(
+      new WritableStream({
+        write(data) {
+          terminal.write(data)
+        },
+      }),
+    )
+
+    terminal.onData(data => {
+      shellInput.write(data)
+    })
+  })
+
+  return (
+    <div
+      class={styles.terminal}
+      ref={element => {
+        onMount(() => {
+          terminal.open(element)
+          new ResizeObserver(() => fitAddon.fit()).observe(element)
+        })
+      }}
+    />
+  )
 }
 
 function Tab(props: { path: string }) {
@@ -135,14 +178,14 @@ Directory.Contents = (props: { path: string; layer: number }) => {
 function Explorer() {
   const container = useWebContainer()
   return (
-    <Show
-      when={!container.loading}
-      fallback={<div class={clsx(styles.suspenseMessage, styles.explorer)}>Loading!</div>}
-    >
-      <div class={styles.explorer}>
-        <Directory.Contents path="" layer={0} />
-      </div>
-    </Show>
+    <div class={clsx(styles.pane, styles.explorerPane)}>
+      <h1>Solid Lab</h1>
+      <Show when={!container.loading} fallback={<div class={styles.suspenseMessage}>Loading!</div>}>
+        <div class={styles.explorer}>
+          <Directory.Contents path="" layer={0} />
+        </div>
+      </Show>
+    </div>
   )
 }
 
@@ -168,11 +211,15 @@ function Frame() {
 
   const [packagesInstalled] = createResource(container, async container => {
     container.on('server-ready', (port, url) => setUrl(url))
+
+    terminal.writeln('npm install')
+
     const installProcess = await container.spawn('npm', ['install'])
     installProcess.output.pipeTo(
       new WritableStream({
         write(data) {
           console.log(data)
+          terminal.writeln(data)
         },
       }),
     )
@@ -180,9 +227,17 @@ function Frame() {
     return true
   })
 
-  whenEffect(every(container, packagesInstalled), ([container]) =>
-    container.spawn('npm', ['run', 'dev']),
-  )
+  whenEffect(every(container, packagesInstalled), async ([container]) => {
+    terminal.writeln('npm run dev')
+    const process = await container.spawn('npm', ['run', 'dev'])
+    process.output.pipeTo(
+      new WritableStream({
+        write(data) {
+          terminal.write(data)
+        },
+      }),
+    )
+  })
 
   const loadingMessage = () => {
     if (!container()) return 'Loading Web Container!'
@@ -196,7 +251,7 @@ function Frame() {
       when={!loadingMessage()}
       fallback={<div class={clsx(styles.suspenseMessage, styles.frame)}>{loadingMessage()}</div>}
     >
-      <iframe src={url()} class={styles.frame} />
+      <iframe src={url()} class={styles.frame} onError={console.error} />
     </Show>
   )
 }
@@ -228,10 +283,16 @@ function Repl() {
         tabs,
       }}
     >
-      <div class={styles.Repl} style={{ '--explorer-width': '200px' }}>
+      <div
+        class={styles.Repl}
+        style={{ '--explorer-width': '200px', '--terminal-height': '250px' }}
+      >
         <Explorer />
         <EditorPane tabs={tabs()} />
-        <Frame />
+        <div class={styles.pane}>
+          <Frame />
+          <Terminal />
+        </div>
       </div>
     </ReplContext.Provider>
   )
@@ -246,7 +307,7 @@ export const useWebContainer = () => {
   return context
 }
 
-function App() {
+export function App() {
   const [webContainer] = createResource(async () => {
     const container = await WebContainer.boot()
     await container.mount(files)
@@ -259,5 +320,3 @@ function App() {
     </WebContainerContext.Provider>
   )
 }
-
-export default App

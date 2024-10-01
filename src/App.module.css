@@ -1,14 +1,9 @@
-button {
-  cursor: pointer;
-  border: none;
-  background-color: transparent;
-  font-size: inherit;
-}
-
 .Repl {
   --explorer-layer-offset: 20px;
-  --accent-color: #e4e4e4;
-  --hover-color: #d8d8d8;
+  --accent-color: #dedede;
+  --hover-color: #c7c7c7;
+  --border-color: #7e7e7e;
+  --margin: 5px;
 
   display: flex;
   flex-direction: row;
@@ -23,27 +18,42 @@ button {
 
 .frame {
   display: flex;
+  flex: 1;
   border: none;
-  border-left: 1px solid black;
 }
 
-.explorer {
-  display: grid;
+.explorerPane {
+  display: flex;
   flex: 0 var(--explorer-width) !important;
-  align-content: baseline;
-  overflow: auto;
 
-  & button {
-    display: flex;
-    align-items: center;
-    padding-left: calc(var(--explorer-layer) * var(--explorer-layer-offset));
-    text-align: left;
-    white-space: nowrap;
+  & h1 {
+    border-bottom: 1px solid var(--border-color);
+    padding-left: var(--explorer-layer-offset);
+    line-height: 24px;
+  }
+
+  & .explorer {
+    display: grid;
+    flex: 1;
+    align-content: baseline;
+    overflow: auto;
+
+    & button {
+      display: flex;
+      align-items: center;
+      padding-left: calc(var(--explorer-layer) * var(--explorer-layer-offset));
+      text-align: left;
+      white-space: nowrap;
+
+      &:hover {
+        background-color: var(--hover-color);
+      }
+    }
   }
 }
 
 .tabsContainer {
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid var(--border-color);
   overflow: auto;
 }
 
@@ -54,10 +64,11 @@ button {
 
   & .tab {
     display: flex;
+    border-right: 1px solid var(--border-color);
     font-size: 10pt;
 
     &.selected {
-      background-color: darkgrey;
+      background-color: var(--accent-color);
     }
 
     &:hover .closeTabButton {
@@ -77,13 +88,14 @@ button {
 .editorPane {
   display: flex;
   flex-direction: column;
-  border-left: 1px solid black;
+  border-left: 1px solid var(--border-color);
   overflow: hidden;
 
   & .textarea {
     flex: 1;
     outline: none;
     border: none;
+    padding: var(--margin);
   }
 }
 
@@ -92,4 +104,31 @@ button {
   flex: 1;
   justify-content: center;
   align-items: center;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.terminal {
+  display: flex;
+  flex: 0 var(--terminal-height);
+  border-top: 1px solid var(--border-color);
+  background-color: black;
+  padding: 5px;
+  overflow: hidden;
+
+  & :global(.xterm) {
+    padding-right: 5px;
+    padding-left: 5px;
+    width: 100%;
+    overflow: hidden;
+  }
+  & :global(.xterm-screen) {
+    width: 100%;
+    overflow: auto;
+  }
 }
