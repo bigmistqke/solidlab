@@ -2,10 +2,9 @@
   --explorer-layer-offset: 20px;
   --accent-color: #dedede;
   --hover-color: #c7c7c7;
-  --border-color: #7e7e7e;
+  --border-color: #dedede;
   --margin: 5px;
 
-  display: flex;
   flex-direction: row;
   height: 100vh;
   scrollbar-color: rgb(168, 168, 168) rgba(255, 255, 255, 0);
@@ -27,7 +26,7 @@
   flex: 0 var(--explorer-width) !important;
 
   & h1 {
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
     padding-left: var(--explorer-layer-offset);
     line-height: 24px;
   }
@@ -53,7 +52,7 @@
 }
 
 .tabsContainer {
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 2px solid var(--border-color);
   overflow: auto;
 }
 
@@ -64,7 +63,7 @@
 
   & .tab {
     display: flex;
-    border-right: 1px solid var(--border-color);
+    border-right: 2px solid var(--border-color);
     font-size: 10pt;
 
     &.selected {
@@ -88,7 +87,7 @@
 .editorPane {
   display: flex;
   flex-direction: column;
-  border-left: 1px solid var(--border-color);
+  border-left: 2px solid var(--border-color);
   overflow: hidden;
 
   & .textarea {
@@ -127,14 +126,14 @@
 .pane {
   display: flex;
   flex-direction: column;
-  border-left: 1px solid var(--border-color);
+  border-left: 2px solid var(--border-color);
   overflow: hidden;
 }
 
 .terminal {
   display: flex;
   flex: 0 var(--terminal-height);
-  border-top: 1px solid var(--border-color);
+  border-top: 2px solid var(--border-color);
   background-color: black;
   padding: 5px;
   overflow: hidden;
@@ -147,6 +146,14 @@
   }
   & :global(.xterm-screen) {
     width: 100%;
-    overflow: auto;
+    overflow: hidden;
+  }
+}
+
+.handle {
+  cursor: ew-resize;
+  background-color: var(--border-color);
+  &.vertical {
+    cursor: ns-resize;
   }
 }

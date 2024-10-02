@@ -1,3 +1,4 @@
+import { Split } from '@bigmistqke/solid-grid-split'
 import { WebContainer } from '@webcontainer/api'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
@@ -54,7 +55,8 @@ function Terminal() {
   })
 
   return (
-    <div
+    <Split.Pane
+      size="250px"
       class={styles.terminal}
       ref={element => {
         onMount(() => {
@@ -124,7 +126,7 @@ function EditorPane(props: { tabs: string[] }) {
     container.fs.readFile(path, 'utf-8'),
   )
   return (
-    <div class={styles.editorPane}>
+    <Split.Pane size="1fr" class={styles.editorPane}>
       <Tabs />
       <Show
         when={source() !== undefined}
@@ -138,7 +140,7 @@ function EditorPane(props: { tabs: string[] }) {
           grammar={getTypeFromPath(repl.focusedTab())}
         />
       </Show>
-    </div>
+    </Split.Pane>
   )
 }
 
@@ -202,14 +204,14 @@ Directory.Contents = (props: { path: string; layer: number }) => {
 function Explorer() {
   const container = useWebContainer()
   return (
-    <div class={clsx(styles.pane, styles.explorerPane)}>
+    <Split.Pane size="200px" class={clsx(styles.pane, styles.explorerPane)}>
       <h1>Solid Lab</h1>
       <Show when={!container.loading} fallback={<div class={styles.suspenseMessage}>Loading!</div>}>
         <div class={styles.explorer}>
           <Directory.Contents path="" layer={0} />
         </div>
       </Show>
-    </div>
+    </Split.Pane>
   )
 }
 
@@ -271,16 +273,18 @@ function Frame() {
   }
 
   return (
-    <Show
-      when={!loadingMessage()}
-      fallback={<div class={clsx(styles.suspenseMessage, styles.frame)}>{loadingMessage()}</div>}
-    >
-      <iframe
-        src={url()}
-        class={styles.frame}
-        onError={error => console.error('IFRAME ERRORS!!!', error)}
-      />
-    </Show>
+    <Split.Pane class={styles.pane}>
+      <Show
+        when={!loadingMessage()}
+        fallback={<div class={clsx(styles.suspenseMessage, styles.frame)}>{loadingMessage()}</div>}
+      >
+        <iframe
+          src={url()}
+          class={styles.frame}
+          onError={error => console.error('IFRAME ERRORS!!!', error)}
+        />
+      </Show>
+    </Split.Pane>
   )
 }
 
@@ -311,17 +315,20 @@ function Repl() {
         tabs,
       }}
     >
-      <div
+      <Split
         class={styles.Repl}
         style={{ '--explorer-width': '200px', '--terminal-height': '250px' }}
       >
         <Explorer />
+        <Split.Handle size="5px" class={styles.handle} />
         <EditorPane tabs={tabs()} />
-        <div class={styles.pane}>
+        <Split.Handle size="5px" class={styles.handle} />
+        <Split type="row">
           <Frame />
+          <Split.Handle size="5px" class={clsx(styles.handle, styles.vertical)} />
           <Terminal />
-        </div>
-      </div>
+        </Split>
+      </Split>
     </ReplContext.Provider>
   )
 }
