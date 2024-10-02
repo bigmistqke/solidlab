@@ -33,6 +33,9 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1(@babel/core@7.23.7)(@types/react@18.3.10)(solid-js@1.8.11)
     devDependencies:
+      prettier:
+        specifier: ^3.3.3
+        version: 3.3.3
       solid-devtools:
         specifier: ^0.29.2
         version: 0.29.2(solid-js@1.8.11)(vite@5.0.11)
@@ -737,6 +740,11 @@ packages:
   postcss@8.4.33:
     resolution: {integrity: sha512-Kkpbhhdjw2qQs2O2DGX+8m5OVqEcbB9HRBvuYM9pgrjEFUg30A9LmXNlTAUj4S9kgtGyrMbTzVjH7E+s5Re2yg==}
     engines: {node: ^10 || ^12 || >=14}
+
+  prettier@3.3.3:
+    resolution: {integrity: sha512-i2tDNA0O5IrMO757lfrdQZCc2jPNDVntV0m/+4whiDfWaTKfMNgR7Qz0NAeGz/nRqF4m5/6CLzbP4/liHt12Ew==}
+    engines: {node: '>=14'}
+    hasBin: true
 
   rollup@4.9.5:
     resolution: {integrity: sha512-E4vQW0H/mbNMw2yLSqJyjtkHY9dslf/p0zuT1xehNRqUTBOFMqEjguDvqhXr7N7r/4ttb2jr4T41d3dncmIgbQ==}
@@ -1527,6 +1535,8 @@ snapshots:
       nanoid: 3.3.7
       picocolors: 1.0.0
       source-map-js: 1.0.2
+
+  prettier@3.3.3: {}
 
   rollup@4.9.5:
     dependencies:
