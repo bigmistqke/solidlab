@@ -68,10 +68,11 @@ function Terminal() {
 
 function Tab(props: { path: string }) {
   const repl = useRepl()
+  const isFocused = () => repl.focusedTab() === props.path
   return (
     <span
-      class={clsx(styles.tab, repl.focusedTab() === props.path && styles.selected)}
-      ref={element => onMount(() => element.scrollIntoView())}
+      class={clsx(styles.tab, isFocused() && styles.selected)}
+      ref={element => whenEffect(isFocused, () => element.scrollIntoView())}
     >
       <button class={styles.focusTabButton} onClick={() => repl.focusTab(props.path)}>
         {getNameFromPath(props.path)}
