@@ -1,18 +1,56 @@
 .Repl {
   --explorer-layer-offset: 20px;
-  --accent-color: #dedede;
-  --hover-color: #c7c7c7;
-  --border-color: #dedede;
-  --margin: 5px;
+  --margin: 10px;
+  --height-bar: 25px;
+
+  --color-accent: #edf4fc;
+  --color-bar: #ecf0f6;
+  --color-editor: rgb(254, 254, 254);
+  --color-explorer-selected: #dae4ef;
+  --color-explorer: #f8fafc;
+  --color-foreground-inactive: #797979;
+  --color-foreground: #424242;
+  --color-background-hover: #d9dcdf;
+  --color-scroll-bar: #e1e6ed;
+  --color-handle: #c6cdd6;
+  --vscode-foreground: var(--color-foreground);
 
   flex-direction: row;
   height: 100vh;
-  scrollbar-color: rgb(168, 168, 168) rgba(255, 255, 255, 0);
+
+  scrollbar-color: var(--color-scroll-bar) var(--color-editor);
   scrollbar-width: thin;
+  color: var(--color-foreground);
+  font-size: 10pt;
+
+  &.dark {
+    --color-accent: #0f172a;
+    --color-bar: #1c263a;
+    --color-editor: #000c18;
+    --color-explorer-selected: #b1cae595;
+    --color-explorer: #070725;
+    --color-foreground-inactive: #8f9daeab;
+    --color-foreground: #dde4ec;
+    --color-background-hover: #d9dcdf4f;
+    --color-scroll-bar: #293a5d;
+    --color-handle: #466299;
+  }
+
+  & button {
+    color: var(--color-foreground-inactive);
+
+    &:hover {
+      color: var(--color-foreground);
+    }
+  }
 }
 
 .Repl > * {
   flex: 1;
+}
+
+.framePane {
+  background-color: var(--color-explorer);
 }
 
 .frame {
@@ -21,65 +59,121 @@
   border: none;
 }
 
+iframe {
+  background: white;
+}
+
+.sideBar {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-accent);
+  padding-top: calc(var(--height-bar) / 2);
+  padding-bottom: calc(var(--height-bar) / 2);
+
+  & div:first-child {
+    flex: 1;
+  }
+
+  & div {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 25px;
+    line-height: 25px;
+  }
+}
+
 .explorerPane {
   display: flex;
   flex: 0 var(--explorer-width) !important;
+  background-color: var(--color-explorer);
+}
 
-  & h1 {
-    border-bottom: 2px solid var(--border-color);
-    padding-left: var(--explorer-layer-offset);
-    line-height: 24px;
+.explorer {
+  display: flex;
+  flex-direction: column;
+}
+
+.explorerBar {
+  justify-content: end;
+
+  & button {
+    font-size: 12pt;
+
+    &:hover {
+      background-color: var(--color-background-hover);
+    }
   }
+}
 
-  & .explorer {
-    display: grid;
-    flex: 1;
-    align-content: baseline;
-    overflow: auto;
+.explorerContents {
+  display: grid;
+  flex: 1;
+  align-content: baseline;
+  overflow: auto;
 
-    & button {
-      display: flex;
-      align-items: center;
-      padding-left: calc(var(--explorer-layer) * var(--explorer-layer-offset));
-      text-align: left;
-      white-space: nowrap;
+  & button {
+    display: flex;
+    align-items: center;
+    padding-left: calc(var(--explorer-layer) * var(--explorer-layer-offset));
+    color: var(--color-foreground);
+    text-align: left;
+    white-space: nowrap;
 
-      &:hover {
-        background-color: var(--hover-color);
-      }
+    &.selected {
+      background-color: var(--color-explorer-selected);
+    }
+
+    &:hover:not(.selected) {
+      background-color: var(--color-background-hover);
     }
   }
 }
 
 .tabsContainer {
   border-bottom: 2px solid var(--border-color);
+  background-color: var(--color-bar);
   overflow: auto;
 }
 
-.tabs {
+.bar {
   display: flex;
-  min-height: 24px;
+  background-color: var(--color-bar);
+  min-height: var(--height-bar);
+}
+
+.tabs {
   white-space: nowrap;
+}
 
-  & .tab {
-    display: flex;
-    border-right: 2px solid var(--border-color);
-    font-size: 10pt;
+.tab {
+  display: flex;
+  gap: 5px;
+  border-right: 2px solid var(--border-color);
+  padding-left: var(--margin);
 
-    &.selected {
-      background-color: var(--accent-color);
+  & button:first-child {
+    padding: 0px;
+  }
+
+  &.selected {
+    background-color: var(--color-editor);
+    & button {
+      color: var(--color-foreground);
     }
+  }
 
-    &:hover .closeTabButton {
+  &:hover {
+    & .closeTabButton {
       opacity: 1;
     }
+  }
 
-    & .closeTabButton {
-      opacity: 0;
+  & .closeTabButton {
+    opacity: 0;
 
-      &:hover {
-        background-color: var(--hover-color);
-      }
+    &:hover {
+      background-color: var(--color-background-hover);
     }
   }
 }
@@ -88,13 +182,23 @@
   display: flex;
   flex-direction: column;
   border-left: 2px solid var(--border-color);
+  background-color: var(--color-editor);
   overflow: hidden;
 
+  & .editorBar {
+    justify-content: end;
+    font-size: 8pt !important;
+  }
+
   & .textarea {
+    --tm-background-color: transparent;
     flex: 1;
     outline: none;
     border: none;
+    background: transparent;
+    background-color: transparent;
     padding: var(--margin);
+    font-family: geist-mono;
   }
 
   & .textarea {
@@ -121,12 +225,13 @@
   flex: 1;
   justify-content: center;
   align-items: center;
+  gap: 5px;
 }
 
 .pane {
   display: flex;
+  position: relative;
   flex-direction: column;
-  border-left: 2px solid var(--border-color);
   overflow: hidden;
 }
 
@@ -151,10 +256,67 @@
 }
 
 .handle {
+  z-index: 10;
   cursor: ew-resize;
-  background-color: var(--border-color);
-  &.vertical {
+  overflow: auto !important;
+
+  &.column div {
     cursor: ns-resize;
+    margin-top: -2.5px;
+    margin-left: 0px;
+    width: 100%;
+    height: 5px;
+  }
+
+  & div {
+    position: absolute;
+    transition: background-color 0.125s;
+    margin-top: 0px;
+    margin-left: -2.5px;
+    background-color: transparent;
+    width: 5px;
+    height: 100%;
+  }
+
+  & div:hover,
+  &[data-active-handle] div {
+    background-color: var(--color-handle);
+  }
+}
+
+.locationBar {
+  display: flex;
+  background-color: var(--color-bar);
+  height: var(--height-bar);
+
+  & button {
+    width: var(--height-bar);
+  }
+
+  & input {
+    flex: 1;
+    margin: 4px;
+    outline: none;
+    border: none;
+    border-radius: 3px;
+    padding-left: 5px;
+  }
+}
+
+.colorModeButtonDark {
+  transform: rotateZ(180deg);
+}
+
+.loaderAnimation {
+  animation: 1s infinite forwards rotation;
+}
+
+@keyframes rotation {
+  from {
+    transform: rotateZ(0deg);
+  }
+  to {
+    transform: rotateZ(360deg);
   }
 }
 

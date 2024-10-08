@@ -9,8 +9,11 @@ importers:
   .:
     dependencies:
       '@bigmistqke/solid-grid-split':
-        specifier: ^0.0.1
-        version: 0.0.1(solid-js@1.8.11)
+        specifier: ^0.0.2
+        version: 0.0.2(solid-js@1.8.11)
+      '@solid-primitives/storage':
+        specifier: ^4.2.1
+        version: 4.2.1(solid-js@1.8.11)
       '@webcontainer/api':
         specifier: ^1.3.0
         version: 1.3.0
@@ -231,8 +234,8 @@ packages:
     resolution: {integrity: sha512-+uarb83brBzPKN38NX1MkB6vb6+mwvR6amUulqAE7ccQw1pEl+bCia9TbdG1lsnFP7lZySvUn37CHyXQdfTwzg==}
     engines: {node: '>=6.9.0'}
 
-  '@bigmistqke/solid-grid-split@0.0.1':
-    resolution: {integrity: sha512-GNOZ+oESUlhcTb/zH4ergmA4qiq+rRubrXNphi+ZdGub46LJ7kOkhbMs4fkB5meuv+X+EU6HznJ6xXkNx2W8NQ==}
+  '@bigmistqke/solid-grid-split@0.0.2':
+    resolution: {integrity: sha512-SbAZrBMc+hcQsHvGT/xzIVQH5vBsA4dLzOQVgKJ+1aQOd2NtbAu1jIEaR6EpxIJwyLZ1ZJ2VQtdZw7VdRyFB2g==}
     engines: {node: '>=18', pnpm: '>=9.0.0'}
     peerDependencies:
       solid-js: ^1.6.0
@@ -553,6 +556,18 @@ packages:
     resolution: {integrity: sha512-PtvkbbucbjT+9p95pksOciG9gOnCtJz4IUyAKX1Ld7YwI+QgtPTo0Wuxs8gNbNtLtoDv5PNv5t4YRzUyl0fwdg==}
     peerDependencies:
       solid-js: ^1.6.12
+
+  '@solid-primitives/storage@4.2.1':
+    resolution: {integrity: sha512-1XUJeaSlizH9Eam/+IbIpslHEnggJMNZXzfsr06AlbG6tJtQENMu0+94ZIvooxt4Cyw46wPzcnHYbSK7LzoQAA==}
+    peerDependencies:
+      '@tauri-apps/plugin-store': '*'
+      solid-js: ^1.6.12
+      solid-start: '*'
+    peerDependenciesMeta:
+      '@tauri-apps/plugin-store':
+        optional: true
+      solid-start:
+        optional: true
 
   '@solid-primitives/styles@0.0.111':
     resolution: {integrity: sha512-1mBxOGAPXmfD5oYCvqjKBDN7SuNjz2qz7RdH7KtsuNLQh6lpuSKadtHnLvru0Y8Vz1InqTJisBIy/6P5kyDmPw==}
@@ -1095,7 +1110,7 @@ snapshots:
       '@babel/helper-validator-identifier': 7.22.20
       to-fast-properties: 2.0.0
 
-  '@bigmistqke/solid-grid-split@0.0.1(solid-js@1.8.11)':
+  '@bigmistqke/solid-grid-split@0.0.2(solid-js@1.8.11)':
     dependencies:
       solid-js: 1.8.11
 
@@ -1349,6 +1364,11 @@ snapshots:
   '@solid-primitives/static-store@0.0.6(solid-js@1.8.11)':
     dependencies:
       '@solid-primitives/utils': 6.2.2(solid-js@1.8.11)
+      solid-js: 1.8.11
+
+  '@solid-primitives/storage@4.2.1(solid-js@1.8.11)':
+    dependencies:
+      '@solid-primitives/utils': 6.2.3(solid-js@1.8.11)
       solid-js: 1.8.11
 
   '@solid-primitives/styles@0.0.111(solid-js@1.8.11)':

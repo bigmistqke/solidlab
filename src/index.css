@@ -1,20 +1,39 @@
+@font-face {
+  font-style: normal;
+  font-weight: normal;
+  src: url('./assets/geist/Geist-Regular.ttf');
+  font-family: geist;
+}
+
+@font-face {
+  font-style: normal;
+  font-weight: normal;
+  src: url('./assets/geist-mono/GeistMono-Regular.otf');
+  font-family: geist-mono;
+}
+
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
-    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  margin: 0;
+  font-family: geist;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-family: geist-mono;
+}
+textarea {
+  font-family: geist-mono;
 }
 
 button {
   cursor: pointer;
   border: none;
   background-color: transparent;
+  color: inherit;
   font-size: inherit;
+  font-family: inherit;
 }
 
 h1 {

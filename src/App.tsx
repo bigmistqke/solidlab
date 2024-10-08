@@ -1,4 +1,5 @@
 import { Split } from '@bigmistqke/solid-grid-split'
+import { makePersisted } from '@solid-primitives/storage'
 import { WebContainer } from '@webcontainer/api'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
@@ -29,7 +30,11 @@ function getNameFromPath(path: string) {
   return segments[segments.length - 1]
 }
 
-const terminal = new TerminalInstance({ convertEol: true, fontSize: 10, lineHeight: 1 })
+const terminal = new TerminalInstance({
+  convertEol: true,
+  fontSize: 10,
+  lineHeight: 1,
+})
 const fitAddon = new FitAddon()
 terminal.loadAddon(new WebLinksAddon())
 terminal.loadAddon(fitAddon)
@@ -92,7 +97,7 @@ function Tabs() {
   const repl = useRepl()
   return (
     <div class={styles.tabsContainer}>
-      <div class={styles.tabs}>
+      <div class={clsx(styles.tabs, styles.bar)}>
         <For each={repl.tabs()}>{tab => <Tab path={tab} />}</For>
       </div>
     </div>
@@ -119,7 +124,7 @@ const getTypeFromPath = (path: string): Grammar => {
   }
 }
 
-function EditorPane(props: { tabs: string[] }) {
+function EditorPane() {
   const repl = useRepl()
   const container = useWebContainer()
   const [source] = createResource(every(repl.focusedTab, container), ([path, container]) =>
@@ -130,16 +135,24 @@ function EditorPane(props: { tabs: string[] }) {
       <Tabs />
       <Show
         when={source() !== undefined}
-        fallback={<div class={styles.suspenseMessage}>Loading File!</div>}
+        fallback={
+          <div class={styles.suspenseMessage}>
+            <LoaderAnimation />
+          </div>
+        }
       >
         <TmTextarea
           class={styles.textarea}
           onInput={e => container()!.fs.writeFile(repl.focusedTab(), e.currentTarget.value)}
           value={source() || ''}
-          theme="vitesse-light"
+          theme={repl.colorMode() === 'dark' ? 'night-owl' : 'light-plus'}
           grammar={getTypeFromPath(repl.focusedTab())}
         />
       </Show>
+      <div class={clsx(styles.editorBar, styles.bar)}>
+        <button>Tabs (2)</button>
+        <button>Format</button>
+      </div>
     </Split.Pane>
   )
 }
@@ -148,7 +161,10 @@ function File(props: { layer: number; path: string }) {
   const repl = useRepl()
   return (
     <button
-      style={{ '--explorer-layer': props.layer }}
+      style={{
+        '--explorer-layer': props.layer,
+      }}
+      class={clsx(repl.focusedTab() === props.path && styles.selected)}
       onClick={() => {
         repl.addTab(props.path)
         repl.focusTab(props.path)
@@ -183,9 +199,18 @@ function Directory(props: { path: string; layer: number; open?: boolean }) {
 
 Directory.Contents = (props: { path: string; layer: number }) => {
   const container = useWebContainer()
-  const [contents] = createResource(container, container =>
-    container.fs.readdir(props.path, { withFileTypes: true }),
-  )
+  const [contents] = createResource(container, async container => {
+    const contents = await container.fs.readdir(props.path, { withFileTypes: true })
+    return contents.sort((a, b) => {
+      if (a.isFile() && b.isDirectory()) {
+        return 1
+      }
+      if (b.isFile() && a.isDirectory()) {
+        return -1
+      }
+      return a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1
+    })
+  })
 
   return (
     <For each={contents()}>
@@ -201,13 +226,44 @@ Directory.Contents = (props: { path: string; layer: number }) => {
   )
 }
 
+function SideBar() {
+  const repl = useRepl()
+  return (
+    <Split.Pane size="40px" class={styles.sideBar}>
+      <div>
+        <CodiconButton kind="file" />
+        <CodiconButton kind="cloud-upload" />
+        <CodiconButton kind="file-directory" />
+      </div>
+      <div>
+        <CodiconButton
+          kind="color-mode"
+          onClick={repl.toggleColorMode}
+          class={clsx(repl.colorMode() === 'dark' && styles.colorModeButtonDark)}
+        />
+        <CodiconButton kind="github" />
+      </div>
+    </Split.Pane>
+  )
+}
+
 function Explorer() {
   const container = useWebContainer()
   return (
-    <Split.Pane size="200px" class={clsx(styles.pane, styles.explorerPane)}>
-      <h1>Solid Lab</h1>
-      <Show when={!container.loading} fallback={<div class={styles.suspenseMessage}>Loading!</div>}>
-        <div class={styles.explorer}>
+    <Split.Pane max="50px" size="200px" class={clsx(styles.pane, styles.explorerPane)}>
+      <div class={clsx(styles.explorerBar, styles.bar)}>
+        <CodiconButton kind="new-file" />
+        <CodiconButton kind="new-folder" />
+      </div>
+      <Show
+        when={!container.loading}
+        fallback={
+          <div class={styles.suspenseMessage}>
+            <LoaderAnimation />
+          </div>
+        }
+      >
+        <div class={styles.explorerContents}>
           <Directory.Contents path="" layer={0} />
         </div>
       </Show>
@@ -217,30 +273,41 @@ function Explorer() {
 
 const ReplContext = createContext<{
   addTab: (path: string) => void
-  focusTab: (path: string) => void
   closeTab: (path: string) => void
-  tabs: Accessor<string[]>
+  colorMode: Accessor<'dark' | 'light'>
   focusedTab: () => string
+  focusTab: (path: string) => void
+  tabs: Accessor<string[]>
+  toggleColorMode: () => void
 }>()
 
 function useRepl() {
   const context = useContext(ReplContext)
   if (!context) {
-    throw `useRepl should be used in a descendant of Repl`
+    throw `useTabs should be used in a descendant of Repl`
   }
   return context
+}
+
+function LoaderAnimation() {
+  return <Codicon kind="loading" class={styles.loaderAnimation} />
 }
 
 function Frame() {
   const [url, setUrl] = createSignal<string>()
   const container = useWebContainer()
 
+  let frame: HTMLIFrameElement
+
   const [packagesInstalled] = createResource(container, async container => {
-    container.on('server-ready', (port, url) => setUrl(url))
+    container.on('server-ready', (port, url) => {
+      console.log('port is ', port)
+      setUrl(url)
+    })
 
-    terminal.writeln('npm install')
+    terminal.writeln('pnpm install')
 
-    const installProcess = await container.spawn('npm', ['install'])
+    const installProcess = await container.spawn('pnpm', ['install'])
     installProcess.output.pipeTo(
       new WritableStream({
         write(data) {
@@ -254,8 +321,8 @@ function Frame() {
   })
 
   whenEffect(every(container, packagesInstalled), async ([container]) => {
-    terminal.writeln('npm run dev')
-    const process = await container.spawn('npm', ['run', 'dev'])
+    terminal.writeln('pnpm dev')
+    const process = await container.spawn('pnpm', ['dev'])
     process.output.pipeTo(
       new WritableStream({
         write(data) {
@@ -266,35 +333,58 @@ function Frame() {
   })
 
   const loadingMessage = () => {
-    if (!container()) return 'Loading Web Container!'
+    if (!container()) return 'Booting Web Container!'
     if (!packagesInstalled()) return 'Installing Node Modules!'
     if (!url()) return 'Initializing Development Server!'
     return undefined
   }
 
+  function onReload() {
+    frame.src = `${url()}?${performance.now()}` || ''
+  }
+
   return (
-    <Split.Pane class={styles.pane}>
+    <Split.Pane class={clsx(styles.pane, styles.framePane)}>
+      <div class={clsx(styles.locationBar, styles.bar)}>
+        <CodiconButton kind="debug-restart" onClick={onReload} />
+        <input value={url() || '/'} />
+      </div>
       <Show
         when={!loadingMessage()}
-        fallback={<div class={clsx(styles.suspenseMessage, styles.frame)}>{loadingMessage()}</div>}
+        fallback={
+          <div class={clsx(styles.suspenseMessage, styles.frame)}>
+            <LoaderAnimation /> {loadingMessage()}
+          </div>
+        }
       >
-        <iframe
-          src={url()}
-          class={styles.frame}
-          onError={error => console.error('IFRAME ERRORS!!!', error)}
-        />
+        <iframe ref={frame!} src={url()} class={styles.frame} />
       </Show>
     </Split.Pane>
+  )
+}
+
+function Handle(props: { column?: boolean }) {
+  return (
+    <Split.Handle size="0px" class={clsx(styles.handle, props.column && styles.column)}>
+      <div />
+    </Split.Handle>
   )
 }
 
 function Repl() {
   const [tabs, setTabs] = createSignal<string[]>(['/src/app.tsx'])
   const [focusedTab, setFocusedTab] = createSignal<string>('/src/app.tsx')
+  const [colorMode, setColorMode] = makePersisted(createSignal<'light' | 'dark'>('light'), {
+    name: 'color-mode',
+  })
 
   return (
     <ReplContext.Provider
       value={{
+        colorMode,
+        toggleColorMode() {
+          setColorMode(mode => (mode === 'light' ? 'dark' : 'light'))
+        },
         addTab(path) {
           if (tabs().includes(path)) return
           setTabs(tabs => [...tabs, path])
@@ -316,16 +406,17 @@ function Repl() {
       }}
     >
       <Split
-        class={styles.Repl}
+        class={clsx(styles.Repl, colorMode() === 'dark' && styles.dark)}
         style={{ '--explorer-width': '200px', '--terminal-height': '250px' }}
       >
+        <SideBar />
         <Explorer />
-        <Split.Handle size="5px" class={styles.handle} />
-        <EditorPane tabs={tabs()} />
-        <Split.Handle size="5px" class={styles.handle} />
-        <Split type="row">
+        <Handle />
+        <EditorPane />
+        <Handle />
+        <Split type="row" class={styles.pane}>
           <Frame />
-          <Split.Handle size="5px" class={clsx(styles.handle, styles.vertical)} />
+          <Handle column />
           <Terminal />
         </Split>
       </Split>
