@@ -176,11 +176,13 @@ function File(props: { layer: number; path: string }) {
 }
 
 function Directory(props: { path: string; layer: number; open?: boolean }) {
+  const repl = useRepl()
   const [open, setOpen] = createSignal(props.open || false)
   return (
     <>
       <button
         style={{ '--explorer-layer': props.layer - 1 }}
+        class={clsx(!open() && repl.focusedTab().includes(props.path) && styles.selected)}
         onClick={() => setOpen(bool => !bool)}
       >
         <Codicon
@@ -294,15 +296,15 @@ function LoaderAnimation() {
 }
 
 function Frame() {
-  const [url, setUrl] = createSignal<string>()
   const container = useWebContainer()
 
-  let frame: HTMLIFrameElement
+  const [baseUrl, setBaseUrl] = createSignal<string>()
+  const [route, setRoute] = createSignal('/')
 
   const [packagesInstalled] = createResource(container, async container => {
     container.on('server-ready', (port, url) => {
       console.log('port is ', port)
-      setUrl(url)
+      setBaseUrl(url)
     })
 
     terminal.writeln('pnpm install')
@@ -311,7 +313,6 @@ function Frame() {
     installProcess.output.pipeTo(
       new WritableStream({
         write(data) {
-          console.log(data)
           terminal.writeln(data)
         },
       }),
@@ -319,6 +320,13 @@ function Frame() {
     await installProcess.exit
     return true
   })
+
+  const loadingMessage = () => {
+    if (!container()) return 'Booting Web Container!'
+    if (!packagesInstalled()) return 'Installing Node Modules!'
+    if (!baseUrl()) return 'Initializing Development Server!'
+    return undefined
+  }
 
   whenEffect(every(container, packagesInstalled), async ([container]) => {
     terminal.writeln('pnpm dev')
@@ -332,22 +340,40 @@ function Frame() {
     )
   })
 
-  const loadingMessage = () => {
-    if (!container()) return 'Booting Web Container!'
-    if (!packagesInstalled()) return 'Installing Node Modules!'
-    if (!url()) return 'Initializing Development Server!'
-    return undefined
-  }
-
-  function onReload() {
-    frame.src = `${url()}?${performance.now()}` || ''
-  }
+  onMount(() => {
+    window.addEventListener(
+      'message',
+      e => {
+        if (typeof e.data !== 'object') return
+        if (e.data.type === 'url-changed') {
+          const [, route] = e.data.location.split('local-corp.webcontainer-api.io')
+          setRoute(route)
+        }
+      },
+      false,
+    )
+  })
 
   return (
     <Split.Pane class={clsx(styles.pane, styles.framePane)}>
       <div class={clsx(styles.locationBar, styles.bar)}>
-        <CodiconButton kind="debug-restart" onClick={onReload} />
-        <input value={url() || '/'} />
+        <CodiconButton
+          kind="debug-restart"
+          onClick={() => {
+            const _baseUrl = baseUrl()
+            setBaseUrl(undefined)
+            requestAnimationFrame(() => setBaseUrl(_baseUrl))
+          }}
+        />
+        <input
+          spellcheck={false}
+          value={route()}
+          onKeyDown={event => {
+            if (event.key === 'Enter') {
+              setRoute(event.currentTarget.value)
+            }
+          }}
+        />
       </div>
       <Show
         when={!loadingMessage()}
@@ -357,7 +383,7 @@ function Frame() {
           </div>
         }
       >
-        <iframe ref={frame!} src={url()} class={styles.frame} />
+        <iframe src={baseUrl() + route()} class={styles.frame} onLoad={console.log} />
       </Show>
     </Split.Pane>
   )

@@ -8,7 +8,7 @@
 @font-face {
   font-style: normal;
   font-weight: normal;
-  src: url('./assets/geist-mono/GeistMono-Regular.otf');
+  src: url('./assets/geist-mono/GeistMono-Regular.ttf');
   font-family: geist-mono;
 }
 
@@ -20,11 +20,11 @@ body {
   font-family: geist;
 }
 
-code {
-  font-family: geist-mono;
+pre {
+  font-family: geist-mono !important;
 }
 textarea {
-  font-family: geist-mono;
+  font-family: geist-mono !important;
 }
 
 button {

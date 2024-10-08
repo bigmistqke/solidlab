@@ -198,7 +198,11 @@ iframe {
     background: transparent;
     background-color: transparent;
     padding: var(--margin);
-    font-family: geist-mono;
+
+    & * {
+      font-size: 9pt;
+      line-height: 12pt;
+    }
   }
 
   & .textarea {
@@ -297,9 +301,11 @@ iframe {
     flex: 1;
     margin: 4px;
     outline: none;
-    border: none;
+    border: 1px solid var(--color-foreground-inactive);
     border-radius: 3px;
+    background: transparent;
     padding-left: 5px;
+    color: var(--color-foreground);
   }
 }
 
