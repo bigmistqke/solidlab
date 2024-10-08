@@ -157,3 +157,8 @@
     cursor: ns-resize;
   }
 }
+
+[data-active-pane='true'] * {
+  pointer-events: none;
+  user-select: none;
+}
