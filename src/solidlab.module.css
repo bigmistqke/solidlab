@@ -1,4 +1,4 @@
-.Repl {
+.solidlab {
   --explorer-layer-offset: 20px;
   --margin: 10px;
   --height-bar: 30px;
@@ -6,7 +6,7 @@
   --color-accent: #edf4fc;
   --color-bar: #ecf0f6;
   --color-editor: rgb(254, 254, 254);
-  --color-explorer-selected: #dae4ef;
+  --color-explorer-active: #dae4ef;
   --color-explorer: #f8fafc;
   --color-foreground-inactive: #797979;
   --color-foreground: #424242;
@@ -27,7 +27,7 @@
     --color-accent: #0f172a;
     --color-bar: #1c263a;
     --color-editor: #000c18;
-    --color-explorer-selected: #b1cae595;
+    --color-explorer-active: #67a1df95;
     --color-explorer: #070725;
     --color-foreground-inactive: #8f9daeab;
     --color-foreground: #dde4ec;
@@ -58,7 +58,7 @@
   background-color: darkgrey;
 }
 
-.Repl > * {
+.solidlab > * {
   flex: 1;
 }
 
@@ -124,20 +124,58 @@ iframe {
   flex: 1;
   align-content: baseline;
   overflow: auto;
+  color: var(--color-foreground);
+
+  & input {
+    outline: none;
+    border: none;
+    background: transparent;
+    background-color: var(--color-explorer-active);
+    padding-left: calc(var(--explorer-layer) * var(--explorer-layer-offset));
+    color: inherit;
+  }
 
   & button {
     display: flex;
+    position: relative;
     align-items: center;
     padding-left: calc(var(--explorer-layer) * var(--explorer-layer-offset));
-    color: var(--color-foreground);
+    color: inherit;
     text-align: left;
     white-space: nowrap;
 
     &.selected {
-      background-color: var(--color-explorer-selected);
+      margin: -1px;
+      outline: none;
+      border: 1px dashed var(--color-foreground-inactive);
     }
 
-    &:hover:not(.selected) {
+    &::before {
+      position: absolute;
+      left: 0px;
+      opacity: 0;
+      transition: opacity 0.125s;
+      background: var(--color-foreground);
+      width: 3px;
+      height: 100%;
+      content: '';
+    }
+
+    &:focus-visible {
+      outline: none;
+      border: none;
+      background: var(--color-background-hover);
+
+      &::before {
+        opacity: 1;
+      }
+    }
+
+    &.active {
+      background-color: var(--color-explorer-active);
+    }
+
+    &:hover:not(.active) {
       background-color: var(--color-background-hover);
     }
   }
@@ -169,7 +207,7 @@ iframe {
     padding: 0px;
   }
 
-  &.selected {
+  &.active {
     background-color: var(--color-editor);
     & button {
       color: var(--color-foreground);
