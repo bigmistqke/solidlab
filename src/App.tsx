@@ -207,9 +207,10 @@ function SideBar() {
   return (
     <Split.Pane size="40px" class={styles.sideBar}>
       <div>
-        <CodiconButton kind="file" />
-        <CodiconButton kind="cloud-upload" />
-        <CodiconButton kind="file-directory" />
+        <CodiconButton kind="add" style={{ transform: 'rotateZ(90deg)' }} />
+        <CodiconButton kind="search" />
+        <CodiconButton kind="arrow-down" />
+        <CodiconButton kind="arrow-up" />
       </div>
       <div>
         <CodiconButton
@@ -217,7 +218,6 @@ function SideBar() {
           onClick={repl.toggleColorMode}
           class={clsx(repl.colorMode() === 'dark' && styles.colorModeButtonDark)}
         />
-        <CodiconButton kind="github" />
       </div>
     </Split.Pane>
   )
