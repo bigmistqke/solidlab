@@ -14,14 +14,14 @@ import {
   For,
   onMount,
   Resource,
+  Setter,
   Show,
   useContext,
 } from 'solid-js'
-import { TmTextarea } from 'tm-textarea/solid'
-import { Grammar } from 'tm-textarea/tm'
 import styles from './App.module.css'
-import { Codicon } from './codicon/codicon'
-import { CodiconButton } from './codicon/codicon-button'
+import { Codicon } from './components/codicon/codicon'
+import { CodiconButton } from './components/codicon/codicon-button'
+import { Monaco } from './components/monaco'
 import { files } from './files'
 import { every, whenEffect } from './utils/conditionals'
 
@@ -75,13 +75,13 @@ function Terminal() {
 
 function Tab(props: { path: string }) {
   const repl = useRepl()
-  const isFocused = () => repl.focusedTab() === props.path
+  const isFocused = () => repl.activeTab() === props.path
   return (
     <span
       class={clsx(styles.tab, isFocused() && styles.selected)}
       ref={element => whenEffect(isFocused, () => element.scrollIntoView())}
     >
-      <button class={styles.focusTabButton} onClick={() => repl.focusTab(props.path)}>
+      <button class={styles.focusTabButton} onClick={() => repl.setActiveTab(props.path)}>
         {getNameFromPath(props.path)}
       </button>
       <CodiconButton
@@ -104,30 +104,10 @@ function Tabs() {
   )
 }
 
-const getTypeFromPath = (path: string): Grammar => {
-  const extension = path.split('.').pop()
-  switch (extension) {
-    case 'tsx':
-      return 'tsx'
-    case 'ts':
-      return 'typescript'
-    case 'js':
-      return 'javascript'
-    case 'jsx':
-      return 'jsx'
-    case 'json':
-      return 'json'
-    case 'css':
-      return 'css'
-    default:
-      return 'tsx'
-  }
-}
-
 function EditorPane() {
   const repl = useRepl()
   const container = useWebContainer()
-  const [source] = createResource(every(repl.focusedTab, container), ([path, container]) =>
+  const [source] = createResource(every(repl.activeTab, container), ([path, container]) =>
     container.fs.readFile(path, 'utf-8'),
   )
   return (
@@ -141,13 +121,7 @@ function EditorPane() {
           </div>
         }
       >
-        <TmTextarea
-          class={styles.textarea}
-          onInput={e => container()!.fs.writeFile(repl.focusedTab(), e.currentTarget.value)}
-          value={source() || ''}
-          theme={repl.colorMode() === 'dark' ? 'night-owl' : 'light-plus'}
-          grammar={getTypeFromPath(repl.focusedTab())}
-        />
+        <Monaco />
       </Show>
       <div class={clsx(styles.editorBar, styles.bar)}>
         <button>Tabs (2)</button>
@@ -164,10 +138,10 @@ function File(props: { layer: number; path: string }) {
       style={{
         '--explorer-layer': props.layer,
       }}
-      class={clsx(repl.focusedTab() === props.path && styles.selected)}
+      class={clsx(repl.activeTab() === props.path && styles.selected)}
       onClick={() => {
         repl.addTab(props.path)
-        repl.focusTab(props.path)
+        repl.setActiveTab(props.path)
       }}
     >
       {getNameFromPath(props.path)}
@@ -182,7 +156,7 @@ function Directory(props: { path: string; layer: number; open?: boolean }) {
     <>
       <button
         style={{ '--explorer-layer': props.layer - 1 }}
-        class={clsx(!open() && repl.focusedTab().includes(props.path) && styles.selected)}
+        class={clsx(!open() && repl.activeTab().includes(props.path) && styles.selected)}
         onClick={() => setOpen(bool => !bool)}
       >
         <Codicon
@@ -273,72 +247,21 @@ function Explorer() {
   )
 }
 
-const ReplContext = createContext<{
-  addTab: (path: string) => void
-  closeTab: (path: string) => void
-  colorMode: Accessor<'dark' | 'light'>
-  focusedTab: () => string
-  focusTab: (path: string) => void
-  tabs: Accessor<string[]>
-  toggleColorMode: () => void
-}>()
-
-function useRepl() {
-  const context = useContext(ReplContext)
-  if (!context) {
-    throw `useTabs should be used in a descendant of Repl`
-  }
-  return context
-}
-
 function LoaderAnimation() {
   return <Codicon kind="loading" class={styles.loaderAnimation} />
 }
 
 function Frame() {
   const container = useWebContainer()
-
-  const [baseUrl, setBaseUrl] = createSignal<string>()
-  const [route, setRoute] = createSignal('/')
-
-  const [packagesInstalled] = createResource(container, async container => {
-    container.on('server-ready', (port, url) => {
-      console.log('port is ', port)
-      setBaseUrl(url)
-    })
-
-    terminal.writeln('pnpm install')
-
-    const installProcess = await container.spawn('pnpm', ['install'])
-    installProcess.output.pipeTo(
-      new WritableStream({
-        write(data) {
-          terminal.writeln(data)
-        },
-      }),
-    )
-    await installProcess.exit
-    return true
-  })
+  const repl = useRepl()
 
   const loadingMessage = () => {
     if (!container()) return 'Booting Web Container!'
-    if (!packagesInstalled()) return 'Installing Node Modules!'
-    if (!baseUrl()) return 'Initializing Development Server!'
+    if (!repl.progress.packagesInstalled()) return 'Installing Node Modules!'
+
+    if (!repl.baseUrl()) return 'Initializing Development Server!'
     return undefined
   }
-
-  whenEffect(every(container, packagesInstalled), async ([container]) => {
-    terminal.writeln('pnpm dev')
-    const process = await container.spawn('pnpm', ['dev'])
-    process.output.pipeTo(
-      new WritableStream({
-        write(data) {
-          terminal.write(data)
-        },
-      }),
-    )
-  })
 
   onMount(() => {
     window.addEventListener(
@@ -347,7 +270,7 @@ function Frame() {
         if (typeof e.data !== 'object') return
         if (e.data.type === 'url-changed') {
           const [, route] = e.data.location.split('local-corp.webcontainer-api.io')
-          setRoute(route)
+          repl.setRoute(route)
         }
       },
       false,
@@ -360,17 +283,17 @@ function Frame() {
         <CodiconButton
           kind="debug-restart"
           onClick={() => {
-            const _baseUrl = baseUrl()
-            setBaseUrl(undefined)
-            requestAnimationFrame(() => setBaseUrl(_baseUrl))
+            const _baseUrl = repl.baseUrl()
+            repl.setBaseUrl(undefined)
+            requestAnimationFrame(() => repl.setBaseUrl(_baseUrl))
           }}
         />
         <input
           spellcheck={false}
-          value={route()}
+          value={repl.route()}
           onKeyDown={event => {
             if (event.key === 'Enter') {
-              setRoute(event.currentTarget.value)
+              repl.setRoute(event.currentTarget.value)
             }
           }}
         />
@@ -383,7 +306,7 @@ function Frame() {
           </div>
         }
       >
-        <iframe src={baseUrl() + route()} class={styles.frame} onLoad={console.log} />
+        <iframe src={repl.baseUrl() + repl.route()} class={styles.frame} />
       </Show>
     </Split.Pane>
   )
@@ -397,16 +320,83 @@ function Handle(props: { column?: boolean }) {
   )
 }
 
+const ReplContext = createContext<{
+  activeTab: () => string
+  setActiveTab: (path: string) => void
+  addTab: (path: string) => void
+  baseUrl: Accessor<string | undefined>
+  setBaseUrl: Setter<string | undefined>
+  closeTab: (path: string) => void
+  colorMode: Accessor<'dark' | 'light'>
+  progress: { packagesInstalled: Resource<boolean> }
+  route: Accessor<string>
+  setRoute: Setter<string>
+  tabs: Accessor<string[]>
+  toggleColorMode: () => void
+}>()
+
+export function useRepl() {
+  const context = useContext(ReplContext)
+  if (!context) {
+    throw `useTabs should be used in a descendant of Repl`
+  }
+  return context
+}
+
 function Repl() {
+  const container = useWebContainer()
+
   const [tabs, setTabs] = createSignal<string[]>(['/src/app.tsx'])
   const [focusedTab, setFocusedTab] = createSignal<string>('/src/app.tsx')
   const [colorMode, setColorMode] = makePersisted(createSignal<'light' | 'dark'>('light'), {
     name: 'color-mode',
   })
 
+  const [route, setRoute] = createSignal('/')
+  const [baseUrl, setBaseUrl] = createSignal<string>()
+
+  const [packagesInstalled] = createResource(container, async container => {
+    container.on('server-ready', (port, url) => {
+      console.log('port is ', port)
+      setBaseUrl(url)
+    })
+
+    terminal.writeln('npm install')
+
+    const installProcess = await container.spawn('npm', ['install'])
+    installProcess.output.pipeTo(
+      new WritableStream({
+        write(data) {
+          terminal.writeln(data)
+        },
+      }),
+    )
+    await installProcess.exit
+    return true
+  })
+
+  whenEffect(every(container, packagesInstalled), async ([container]) => {
+    terminal.writeln('pnpm dev')
+    const process = await container.spawn('pnpm', ['dev'])
+    process.output.pipeTo(
+      new WritableStream({
+        write(data) {
+          terminal.write(data)
+        },
+      }),
+    )
+  })
+
   return (
     <ReplContext.Provider
       value={{
+        route,
+        setRoute,
+        progress: {
+          packagesInstalled,
+        },
+        baseUrl,
+        setBaseUrl,
         colorMode,
         toggleColorMode() {
           setColorMode(mode => (mode === 'light' ? 'dark' : 'light'))
@@ -415,7 +405,7 @@ function Repl() {
           if (tabs().includes(path)) return
           setTabs(tabs => [...tabs, path])
         },
-        focusTab(path) {
+        setActiveTab(path) {
           setFocusedTab(path)
         },
         closeTab(path) {
@@ -427,7 +417,7 @@ function Repl() {
           }
           setTabs(tabs => tabs.filter(tab => tab !== path))
         },
-        focusedTab: focusedTab,
+        activeTab: focusedTab,
         tabs,
       }}
     >
@@ -463,6 +453,7 @@ export function App() {
   const [webContainer] = createResource(async () => {
     const container = await WebContainer.boot()
     await container.mount(files)
+    window.container = container
     return container
   })
 

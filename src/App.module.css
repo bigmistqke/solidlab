@@ -1,7 +1,7 @@
 .Repl {
   --explorer-layer-offset: 20px;
   --margin: 10px;
-  --height-bar: 25px;
+  --height-bar: 30px;
 
   --color-accent: #edf4fc;
   --color-bar: #ecf0f6;
@@ -43,6 +43,19 @@
       color: var(--color-foreground);
     }
   }
+}
+
+*::-webkit-scrollbar {
+  width: 1em;
+}
+
+*::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+*::-webkit-scrollbar-thumb {
+  outline: 1px solid slategrey;
+  background-color: darkgrey;
 }
 
 .Repl > * {
@@ -183,44 +196,10 @@ iframe {
   flex-direction: column;
   border-left: 2px solid var(--border-color);
   background-color: var(--color-editor);
-  overflow: hidden;
 
   & .editorBar {
     justify-content: end;
     font-size: 8pt !important;
-  }
-
-  & .textarea {
-    --tm-background-color: transparent;
-    flex: 1;
-    outline: none;
-    border: none;
-    background: transparent;
-    background-color: transparent;
-    padding: var(--margin);
-
-    & * {
-      font-size: 9pt;
-      line-height: 12pt;
-    }
-  }
-
-  & .textarea {
-    --line-number-width: calc((var(--tm-line-digits) + 1) * 1ch);
-  }
-
-  & .textarea pre::before {
-    position: absolute;
-    transform: translateX(calc(var(--line-number-width) * -1));
-    opacity: 0.5;
-    counter-reset: line-number calc(var(--tm-line-number) + 1);
-    content: counter(line-number);
-    color: var(--tm-foreground-color);
-  }
-
-  & .textarea pre,
-  & .textarea textarea {
-    transform: translateX(var(--line-number-width));
   }
 }
 
@@ -246,6 +225,8 @@ iframe {
   background-color: black;
   padding: 5px;
   overflow: hidden;
+  scrollbar-color: var(--color-scroll-bar) transparent;
+  scrollbar-width: thin;
 
   & :global(.xterm) {
     padding-right: 5px;
@@ -326,7 +307,7 @@ iframe {
   }
 }
 
-[data-active-pane='true'] * {
+[data-active-pane] * {
   pointer-events: none;
   user-select: none;
 }

@@ -11,6 +11,9 @@ importers:
       '@bigmistqke/solid-grid-split':
         specifier: ^0.0.2
         version: 0.0.2(solid-js@1.8.11)
+      '@monaco-editor/loader':
+        specifier: ^1.4.0
+        version: 1.4.0(monaco-editor@0.52.0)
       '@solid-primitives/storage':
         specifier: ^4.2.1
         version: 4.2.1(solid-js@1.8.11)
@@ -29,12 +32,12 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      monaco-themes:
+        specifier: ^0.4.4
+        version: 0.4.4
       solid-js:
         specifier: ^1.8.11
         version: 1.8.11
-      tm-textarea:
-        specifier: ^0.1.1
-        version: 0.1.1(@babel/core@7.23.7)(@types/react@18.3.10)(solid-js@1.8.11)
     devDependencies:
       prettier:
         specifier: ^3.3.3
@@ -399,10 +402,10 @@ packages:
   '@jridgewell/trace-mapping@0.3.18':
     resolution: {integrity: sha512-w+niJYzMHdd7USdiH2U6869nqhD2nbfZXND5Yp93qIbEmnDNk7PD48o+YchRVpzMU7M6jVCbenTR7PA1FLQ9pA==}
 
-  '@lume/element@0.13.1':
-    resolution: {integrity: sha512-IiSgUeTXX1SjnzvxB+pnoERW5YaeGEtwbR7vyFAmBvI5PvccbTv4TR6mPweHKK/XiO/ZDT1whOS8HmSkRrxMCg==}
+  '@monaco-editor/loader@1.4.0':
+    resolution: {integrity: sha512-00ioBig0x642hytVspPl7DbQyaSWRaolYie/UFNjoTdvoKPzo6xrXLhTk9ixgIKcLH5b5vDOjVNiGyY+uDCUlg==}
     peerDependencies:
-      '@types/react': '*'
+      monaco-editor: '>= 0.21.0 < 1'
 
   '@nothing-but/utils@0.12.1':
     resolution: {integrity: sha512-1qZU1Q5El0IjE7JT/ucvJNzdr2hL3W8Rm27xNf1p6gb3Nw8pGnZmxp6/GEW9h+I1k1cICxXNq25hBwknTQ7yhg==}
@@ -512,11 +515,6 @@ packages:
     peerDependencies:
       solid-js: ^1.6.12
 
-  '@solid-primitives/memo@1.3.9':
-    resolution: {integrity: sha512-OIlGcsEPXr6U23fDaSEm8iqezWDT4SNSjLTekWQVOu4qHostnMPlqU8xo1Jf0I7OgRuqA0wTMQ5cu0bYjeR/ZQ==}
-    peerDependencies:
-      solid-js: ^1.6.12
-
   '@solid-primitives/platform@0.1.1':
     resolution: {integrity: sha512-Ln7dzHFjNDpjmhnKiMAUWBjObRZ01FQtj4ABkSmE51VjLI0i9JW54lbZhJImYjpCyoBjtxBEGWsCgYi9JyRXrA==}
     peerDependencies:
@@ -539,11 +537,6 @@ packages:
 
   '@solid-primitives/scheduled@1.4.2':
     resolution: {integrity: sha512-duKaugDQtPk0v6MnkBuEalWk66/vA2G7zzoimQEvmUdh2+K2o8t908HIfI2NdBfwakQMQBV4epE3TFeN2Vsveg==}
-    peerDependencies:
-      solid-js: ^1.6.12
-
-  '@solid-primitives/scheduled@1.4.3':
-    resolution: {integrity: sha512-HfWN5w7b7FEc6VPLBKnnE302h90jsLMuR28Fcf7neRGGf8jBj6wm6/UFQ00VlKexHFMR6KQ2u4VBh5a1ZcqM8g==}
     peerDependencies:
       solid-js: ^1.6.12
 
@@ -599,12 +592,6 @@ packages:
   '@types/estree@1.0.5':
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
 
-  '@types/prop-types@15.7.13':
-    resolution: {integrity: sha512-hCZTSvwbzWGvhqxp/RqVqwU999pBf2vp7hzIjiYOsl8wqOmUxkQ6ddw1cV3l8811+kdUFus/q4d1Y3E3SyEifA==}
-
-  '@types/react@18.3.10':
-    resolution: {integrity: sha512-02sAAlBnP39JgXwkAq3PeU9DVaaGpZyF3MGcC0MKgQVkZor5IiiDAipVaxQHtDJAmO4GIy/rVBy/LzVj76Cyqg==}
-
   '@webcontainer/api@1.3.0':
     resolution: {integrity: sha512-gnb5P7Qr7xIvOEiUUODhKG6o8i4ZpVFdoKdnggOnWYaGOTECM94PK3alTYifa9YIL304VJkH/liT+fbnKCXa+A==}
 
@@ -647,9 +634,6 @@ packages:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
     engines: {node: '>=4'}
 
-  classy-solid@0.4.2:
-    resolution: {integrity: sha512-dGT0gWObBK7PeIbuxQBpatRprOKCZx+eH6g1khNFrAqUch+EA6EL72AOVE8qImlMYLnnTBVC5Dg+OdoRVCm6SQ==}
-
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
@@ -691,6 +675,9 @@ packages:
     resolution: {integrity: sha512-vbRorB5FUQWvla16U8R/qgaFIya2qGzwDrNmCZuYKrbdSUMG6I1ZCGQRefkRVhuOkIGVne7BQ35DSfo1qvJqFg==}
     engines: {node: '>=0.8.0'}
 
+  fast-plist@0.1.3:
+    resolution: {integrity: sha512-d9cEfo/WcOezgPLAC/8t8wGb6YOD6JTCPMw2QcG2nAdFmyY+9rTUizCTaGjIZAloWENTEUMAPpkUAIJJJ0i96A==}
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -728,15 +715,18 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  lowclass@8.0.1:
-    resolution: {integrity: sha512-E3PL/doaVdgh4iufl5WABDfZF7EwaKukvoNnoU6CvMotPmCWVRzZE/5Sxj12BYq/m8uclHygsB8FOBSaYNXeNA==}
-
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
   merge-anything@5.1.7:
     resolution: {integrity: sha512-eRtbOb1N5iyH0tkQDAoQ4Ipsp/5qSR79Dzrz8hEPxRX10RWWR/iQXdoKmBSRCThY1Fh5EhISDtpSc93fpxUniQ==}
     engines: {node: '>=12.13'}
+
+  monaco-editor@0.52.0:
+    resolution: {integrity: sha512-OeWhNpABLCeTqubfqLMXGsqf6OmPU6pHM85kF3dhy6kq5hnhuVS1p3VrEW/XhWHc71P2tHyS5JFySD8mgs1crw==}
+
+  monaco-themes@0.4.4:
+    resolution: {integrity: sha512-Hbb9pvRrpSi0rZezcB/IOdQnpx10o55Lx4zFdRAAVpFMa1HP7FgaqEZdKffb4ovd90fETCixeFO9JPYFMAq+TQ==}
 
   ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
@@ -804,15 +794,12 @@ packages:
     resolution: {integrity: sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==}
     engines: {node: '>=0.10.0'}
 
+  state-local@1.0.7:
+    resolution: {integrity: sha512-HTEHMNieakEnoe33shBYcZ7NX83ACUjCu8c40iOGEZsngj9zRnkqS9j1pqQPXwobB0ZcVTk27REb7COQ0UR59w==}
+
   supports-color@5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
     engines: {node: '>=4'}
-
-  tm-textarea@0.1.1:
-    resolution: {integrity: sha512-9zUlMnkGn8VtaCBrmPx8vTDzW7mseGbeI40v+6kznP8PqmuqgNz9p/uBj9aNk7Fz3cM7d9bJa06xemAdEP33dQ==}
-    engines: {node: '>=18', pnpm: '>=9.0.0'}
-    peerDependencies:
-      solid-js: ^1.6.0
 
   to-fast-properties@2.0.0:
     resolution: {integrity: sha512-/OaKK0xYrs3DmxRYqL/yDc+FxFUVYhDlXMhRmv3z915w2HF1tnN1omB354j8VUGO/hbRzyD6Y3sA7v7GS/ceog==}
@@ -873,12 +860,6 @@ packages:
     peerDependenciesMeta:
       vite:
         optional: true
-
-  vscode-oniguruma@2.0.1:
-    resolution: {integrity: sha512-poJU8iHIWnC3vgphJnrLZyI3YdqRlR27xzqDmpPXYzA93R4Gk8z7T6oqDzDoHjoikA2aS82crdXFkjELCdJsjQ==}
-
-  vscode-textmate@9.1.0:
-    resolution: {integrity: sha512-lxKSVp2DkFOx9RDAvpiYUrB9/KT1fAfi1aE8CBGstP8N7rLF+Seifj8kDA198X0mYj1CjQUC+81+nQf8CO0nVA==}
 
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
@@ -1202,15 +1183,10 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.0
       '@jridgewell/sourcemap-codec': 1.4.14
 
-  '@lume/element@0.13.1(@babel/core@7.23.7)(@types/react@18.3.10)':
+  '@monaco-editor/loader@1.4.0(monaco-editor@0.52.0)':
     dependencies:
-      '@types/react': 18.3.10
-      babel-preset-solid: 1.8.9(@babel/core@7.23.7)
-      classy-solid: 0.4.2
-      lowclass: 8.0.1
-      solid-js: 1.8.11
-    transitivePeerDependencies:
-      - '@babel/core'
+      monaco-editor: 0.52.0
+      state-local: 1.0.7
 
   '@nothing-but/utils@0.12.1': {}
 
@@ -1320,12 +1296,6 @@ snapshots:
       '@solid-primitives/utils': 6.2.2(solid-js@1.8.11)
       solid-js: 1.8.11
 
-  '@solid-primitives/memo@1.3.9(solid-js@1.8.11)':
-    dependencies:
-      '@solid-primitives/scheduled': 1.4.3(solid-js@1.8.11)
-      '@solid-primitives/utils': 6.2.3(solid-js@1.8.11)
-      solid-js: 1.8.11
-
   '@solid-primitives/platform@0.1.1(solid-js@1.8.11)':
     dependencies:
       solid-js: 1.8.11
@@ -1349,10 +1319,6 @@ snapshots:
       solid-js: 1.8.11
 
   '@solid-primitives/scheduled@1.4.2(solid-js@1.8.11)':
-    dependencies:
-      solid-js: 1.8.11
-
-  '@solid-primitives/scheduled@1.4.3(solid-js@1.8.11)':
     dependencies:
       solid-js: 1.8.11
 
@@ -1408,13 +1374,6 @@ snapshots:
 
   '@types/estree@1.0.5': {}
 
-  '@types/prop-types@15.7.13': {}
-
-  '@types/react@18.3.10':
-    dependencies:
-      '@types/prop-types': 15.7.13
-      csstype: 3.1.2
-
   '@webcontainer/api@1.3.0': {}
 
   '@xterm/addon-fit@0.10.0(@xterm/xterm@5.5.0)':
@@ -1459,11 +1418,6 @@ snapshots:
       ansi-styles: 3.2.1
       escape-string-regexp: 1.0.5
       supports-color: 5.5.0
-
-  classy-solid@0.4.2:
-    dependencies:
-      lowclass: 8.0.1
-      solid-js: 1.8.11
 
   clsx@2.1.1: {}
 
@@ -1513,6 +1467,8 @@ snapshots:
 
   escape-string-regexp@1.0.5: {}
 
+  fast-plist@0.1.3: {}
+
   fsevents@2.3.3:
     optional: true
 
@@ -1532,8 +1488,6 @@ snapshots:
 
   json5@2.2.3: {}
 
-  lowclass@8.0.1: {}
-
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
@@ -1541,6 +1495,12 @@ snapshots:
   merge-anything@5.1.7:
     dependencies:
       is-what: 4.1.15
+
+  monaco-editor@0.52.0: {}
+
+  monaco-themes@0.4.4:
+    dependencies:
+      fast-plist: 0.1.3
 
   ms@2.1.2: {}
 
@@ -1613,22 +1573,11 @@ snapshots:
 
   source-map-js@1.0.2: {}
 
+  state-local@1.0.7: {}
+
   supports-color@5.5.0:
     dependencies:
       has-flag: 3.0.0
-
-  tm-textarea@0.1.1(@babel/core@7.23.7)(@types/react@18.3.10)(solid-js@1.8.11):
-    dependencies:
-      '@lume/element': 0.13.1(@babel/core@7.23.7)(@types/react@18.3.10)
-      '@solid-primitives/memo': 1.3.9(solid-js@1.8.11)
-      classy-solid: 0.4.2
-      clsx: 2.1.1
-      solid-js: 1.8.11
-      vscode-oniguruma: 2.0.1
-      vscode-textmate: 9.1.0
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@types/react'
 
   to-fast-properties@2.0.0: {}
 
@@ -1667,9 +1616,5 @@ snapshots:
   vitefu@0.2.5(vite@5.0.11):
     optionalDependencies:
       vite: 5.0.11
-
-  vscode-oniguruma@2.0.1: {}
-
-  vscode-textmate@9.1.0: {}
 
   yallist@3.1.1: {}

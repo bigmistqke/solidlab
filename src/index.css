@@ -20,13 +20,6 @@ body {
   font-family: geist;
 }
 
-pre {
-  font-family: geist-mono !important;
-}
-textarea {
-  font-family: geist-mono !important;
-}
-
 button {
   cursor: pointer;
   border: none;
@@ -38,4 +31,10 @@ button {
 
 h1 {
   all: unset;
+}
+
+* {
+  transition:
+    color 0.125s,
+    background-color 0.125s;
 }

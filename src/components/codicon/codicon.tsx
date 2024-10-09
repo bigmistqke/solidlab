@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ComponentProps, ValidComponent, createEffect, splitProps } from 'solid-js'
+import { ComponentProps, ValidComponent, splitProps } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import styles from './codicon.module.css'
 
@@ -13,8 +13,6 @@ export function Codicon<T extends ValidComponent = 'div'>(
   props: { kind: CodiconKind; as?: T } & ComponentProps<T>,
 ) {
   const [config, rest] = splitProps(props, ['class', 'as', 'kind', 'style'])
-
-  createEffect(() => console.log(config.class))
 
   return (
     <Dynamic
