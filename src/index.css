@@ -20,12 +20,15 @@ body {
   font-family: geist;
 }
 
-button {
+button,
+input {
   cursor: pointer;
   border: none;
   background-color: transparent;
+  padding: 0px;
   color: inherit;
   font-size: inherit;
+  line-height: inherit;
   font-family: inherit;
 }
 

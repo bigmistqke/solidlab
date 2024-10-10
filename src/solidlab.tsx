@@ -1,4 +1,5 @@
 import { Split } from '@bigmistqke/solid-grid-split'
+import { ContextMenu } from '@kobalte/core/context-menu'
 import { makePersisted } from '@solid-primitives/storage'
 import { WebContainer } from '@webcontainer/api'
 import { FitAddon } from '@xterm/addon-fit'
@@ -8,10 +9,13 @@ import '@xterm/xterm/css/xterm.css'
 import clsx from 'clsx'
 import {
   Accessor,
+  batch,
   createContext,
+  createRenderEffect,
   createResource,
   createSignal,
   For,
+  JSX,
   onMount,
   Resource,
   Setter,
@@ -218,26 +222,103 @@ function Explorer() {
   )
 }
 
-function File(props: { layer: number; path: string }) {
-  const repl = useSolidLab()
+function ExplorerInput(props: {
+  layer: number
+  value: string
+  onSubmit: (event: { currentTarget: HTMLInputElement }) => void
+  prefix?: JSX.Element
+}) {
+  let element: HTMLInputElement
+
+  onMount(() => {
+    // TODO: need to time out when it has hidden parents
+    setTimeout(() => {
+      element.focus()
+      const length = props.value.split('.').slice(0, -1).join('.').length
+      element.setSelectionRange(0, length || props.value.length)
+    }, 125)
+  })
+
   return (
-    <button
+    <div
+      class={styles.explorerInput}
       style={{
         '--explorer-layer': props.layer,
       }}
-      class={clsx(repl.activeTab() === props.path && !repl.newContent() && styles.active)}
-      onClick={() => {
-        repl.addTab(props.path)
-        repl.setActiveTab(props.path)
-      }}
     >
-      {getNameFromPath(props.path)}
-    </button>
+      {props.prefix}
+      <input
+        value={props.value}
+        ref={element!}
+        onFocusOut={props.onSubmit}
+        onKeyDown={e => e.code === 'Enter' && props.onSubmit(e)}
+      />
+    </div>
+  )
+}
+
+function File(props: { layer: number; path: string }) {
+  const [name, setName] = createWritable(() => getNameFromPath(props.path))
+  const repl = useSolidLab()
+  const [renaming, setRenaming] = createSignal(false)
+
+  function onRename(event: { currentTarget: HTMLInputElement }) {
+    batch(() => {
+      setRenaming(false)
+      const name = event.currentTarget.value
+      if (!name) {
+        return
+      }
+      setName(name)
+      const newPath = `${props.path.split('/').slice(0, -1).join('/')}/${name}`
+      repl.container()?.fs.rename(props.path, newPath)
+    })
+  }
+
+  return (
+    <ContextMenu>
+      <Show
+        when={!renaming()}
+        fallback={<ExplorerInput layer={props.layer} value={name()} onSubmit={onRename} />}
+      >
+        <ContextMenu.Trigger
+          as="button"
+          style={{
+            '--explorer-layer': props.layer,
+          }}
+          class={clsx(repl.activeTab() === props.path && !repl.newContent() && styles.active)}
+          onClick={() => {
+            repl.addTab(props.path)
+            repl.setActiveTab(props.path)
+          }}
+        >
+          {name()}
+        </ContextMenu.Trigger>
+      </Show>
+      <ContextMenu.Portal>
+        <ContextMenu.Content class={styles.contextMenu}>
+          <ContextMenu.Item class={styles.contextMenuItem} onClick={() => setRenaming(true)}>
+            <span>Rename</span>
+          </ContextMenu.Item>
+          <ContextMenu.Item
+            class={styles.contextMenuItem}
+            onClick={() => {
+              repl.container()?.fs.rm(props.path, { force: true })
+            }}
+          >
+            <span>Delete</span>
+          </ContextMenu.Item>
+        </ContextMenu.Content>
+      </ContextMenu.Portal>
+    </ContextMenu>
   )
 }
 
 function Directory(props: { path: string; layer: number; open?: boolean }) {
   const repl = useSolidLab()
+
+  const [name, setName] = createWritable(() => getNameFromPath(props.path))
+  const [renaming, setRenaming] = createSignal(false)
   const [open, setOpen] = createSignal(props.open || false)
 
   whenEffect(repl.newContent, ({ path }) => {
@@ -246,29 +327,91 @@ function Directory(props: { path: string; layer: number; open?: boolean }) {
     }
   })
 
+  function onRename(event: { currentTarget: HTMLInputElement }) {
+    batch(() => {
+      setRenaming(false)
+      const name = event.currentTarget.value
+      if (!name) {
+        return
+      }
+      setName(name)
+      const newPath = `${props.path.split('/').slice(0, -1).join('/')}/${name}`
+      repl.container()?.fs.rename(props.path, newPath)
+    })
+  }
+
   return (
     <>
-      <button
-        style={{ '--explorer-layer': props.layer - 1 }}
-        class={clsx(
-          !open() && repl.activeTab().includes(props.path) && styles.active,
-          !repl.newContent() && repl.selectedDirectory() === props.path && styles.selected,
-        )}
-        onClick={() => {
-          setOpen(bool => !bool)
-          repl.setSelectedDirectory(props.path)
-        }}
-      >
-        <Codicon
-          style={{ width: `var(--explorer-layer-offset)` }}
-          as="span"
-          kind={open() ? 'chevron-down' : 'chevron-right'}
-        />
-        {getNameFromPath(props.path)}
-      </button>
-      <Show when={open()}>
-        <Directory.Contents path={props.path} layer={props.layer} />
-      </Show>
+      <ContextMenu>
+        <Show
+          when={!renaming()}
+          fallback={
+            <ExplorerInput
+              layer={props.layer - 1}
+              prefix={
+                <Codicon
+                  style={{ width: `var(--explorer-layer-offset)` }}
+                  as="span"
+                  kind={open() ? 'chevron-down' : 'chevron-right'}
+                />
+              }
+              value={name()}
+              onSubmit={onRename}
+            />
+          }
+        >
+          <ContextMenu.Trigger
+            as="button"
+            style={{ '--explorer-layer': props.layer - 1 }}
+            class={clsx(
+              !open() && repl.activeTab().includes(props.path) && styles.active,
+              !repl.newContent() && repl.selectedDirectory() === props.path && styles.selected,
+            )}
+            onClick={() => {
+              setOpen(bool => !bool)
+              repl.setSelectedDirectory(props.path)
+            }}
+          >
+            <Codicon
+              style={{ width: `var(--explorer-layer-offset)` }}
+              as="span"
+              kind={open() ? 'chevron-down' : 'chevron-right'}
+            />
+            {name()}
+          </ContextMenu.Trigger>
+        </Show>
+        <Show when={open()}>
+          <Directory.Contents path={props.path} layer={props.layer} />
+        </Show>
+        <ContextMenu.Portal>
+          <ContextMenu.Content class={styles.contextMenu}>
+            <ContextMenu.Item class={styles.contextMenuItem} onClick={() => setRenaming(true)}>
+              <span>Rename</span>
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              class={styles.contextMenuItem}
+              onClick={() => {
+                repl.container()?.fs.rm(props.path, { force: true, recursive: true })
+              }}
+            >
+              <span>Delete</span>
+            </ContextMenu.Item>
+            <ContextMenu.Separator class={styles.contextMenuSeparator} />
+            <ContextMenu.Item
+              class={styles.contextMenuItem}
+              onClick={() => repl.setNewContent({ type: 'file', path: props.path })}
+            >
+              <span>Create File</span>
+            </ContextMenu.Item>
+            <ContextMenu.Item
+              class={styles.contextMenuItem}
+              onClick={() => repl.setNewContent({ type: 'directory', path: props.path })}
+            >
+              <span>Create Directory</span>
+            </ContextMenu.Item>
+          </ContextMenu.Content>
+        </ContextMenu.Portal>
+      </ContextMenu>
     </>
   )
 }
@@ -301,7 +444,20 @@ Directory.Contents = (props: { path: string; layer: number }) => {
       </For>
       <Show when={repl.newContent()?.path === props.path && repl.newContent()!} keyed>
         {({ type, path }) => (
-          <Directory.NewContent path={path} type={type} layer={props.layer + 1} />
+          <Directory.NewContent
+            path={path}
+            type={type}
+            layer={type === 'directory' ? props.layer : props.layer + 1}
+            prefix={
+              type === 'directory' ? (
+                <Codicon
+                  style={{ width: `var(--explorer-layer-offset)` }}
+                  as="span"
+                  kind="chevron-right"
+                />
+              ) : undefined
+            }
+          />
         )}
       </Show>
       <For each={contents.latest?.files}>
@@ -311,7 +467,12 @@ Directory.Contents = (props: { path: string; layer: number }) => {
   )
 }
 
-Directory.NewContent = (props: { path: string; type: 'file' | 'directory'; layer: number }) => {
+Directory.NewContent = (props: {
+  path: string
+  type: 'file' | 'directory'
+  layer: number
+  prefix?: JSX.Element
+}) => {
   const repl = useSolidLab()
   const container = repl.container()
 
@@ -319,15 +480,8 @@ Directory.NewContent = (props: { path: string; type: 'file' | 'directory'; layer
     throw `Tried to add new content before repl.container is initialised.`
   }
 
-  let element: HTMLInputElement
-
-  onMount(() => {
-    // TODO: need to time out when it has hidden parents
-    setTimeout(() => element.focus(), 125)
-  })
-
-  async function submitNewContent() {
-    const value = element.value
+  async function submitNewContent(event: { currentTarget: HTMLInputElement }) {
+    const value = event.currentTarget.value
     if (value !== '') {
       const newPath = `${props.path}/${value}`
       if (props.type === 'file') {
@@ -342,14 +496,7 @@ Directory.NewContent = (props: { path: string; type: 'file' | 'directory'; layer
   }
 
   return (
-    <input
-      style={{
-        '--explorer-layer': props.layer,
-      }}
-      ref={element!}
-      onFocusOut={submitNewContent}
-      onKeyDown={e => e.code === 'Enter' && submitNewContent()}
-    />
+    <ExplorerInput prefix={props.prefix} layer={props.layer} value="" onSubmit={submitNewContent} />
   )
 }
 
@@ -534,6 +681,10 @@ export function SolidLab() {
         },
       }),
     )
+  })
+
+  createRenderEffect(() => {
+    document.body.dataset.colorMode = colorMode()
   })
 
   return (

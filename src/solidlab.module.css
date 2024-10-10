@@ -1,4 +1,22 @@
-.solidlab {
+[data-active-pane] * {
+  pointer-events: none;
+  user-select: none;
+}
+
+*::-webkit-scrollbar {
+  width: 1em;
+}
+
+*::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+*::-webkit-scrollbar-thumb {
+  outline: 1px solid slategrey;
+  background-color: darkgrey;
+}
+
+body {
   --explorer-layer-offset: 20px;
   --margin: 10px;
   --height-bar: 30px;
@@ -14,7 +32,26 @@
   --color-scroll-bar: #e1e6ed;
   --color-handle: #c6cdd6;
   --vscode-foreground: var(--color-foreground);
+}
 
+body[data-color-mode='dark'] {
+  --color-accent: #0f172a;
+  --color-bar: #1c263a;
+  --color-editor: #000c18;
+  --color-explorer-active: #67a1df95;
+  --color-explorer: #070725;
+  --color-foreground-inactive: #8f9daeab;
+  --color-foreground: #dde4ec;
+  --color-background-hover: #d9dcdf4f;
+  --color-scroll-bar: #293a5d;
+  --color-handle: #466299;
+}
+
+[data-color-mode='dark'] ::selection {
+  background: var(--color-background-hover);
+}
+
+.solidlab {
   flex-direction: row;
   height: 100vh;
 
@@ -23,19 +60,6 @@
   color: var(--color-foreground);
   font-size: 10pt;
 
-  &.dark {
-    --color-accent: #0f172a;
-    --color-bar: #1c263a;
-    --color-editor: #000c18;
-    --color-explorer-active: #67a1df95;
-    --color-explorer: #070725;
-    --color-foreground-inactive: #8f9daeab;
-    --color-foreground: #dde4ec;
-    --color-background-hover: #d9dcdf4f;
-    --color-scroll-bar: #293a5d;
-    --color-handle: #466299;
-  }
-
   & button {
     color: var(--color-foreground-inactive);
 
@@ -43,19 +67,6 @@
       color: var(--color-foreground);
     }
   }
-}
-
-*::-webkit-scrollbar {
-  width: 1em;
-}
-
-*::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-}
-
-*::-webkit-scrollbar-thumb {
-  outline: 1px solid slategrey;
-  background-color: darkgrey;
 }
 
 .solidlab > * {
@@ -111,6 +122,8 @@ iframe {
   justify-content: end;
 
   & button {
+    aspect-ratio: 1/1;
+    height: 100%;
     font-size: 12pt;
 
     &:hover {
@@ -125,17 +138,25 @@ iframe {
   align-content: baseline;
   overflow: auto;
   color: var(--color-foreground);
+  font-size: 10pt;
+  line-height: 16pt;
 
-  & input {
+  & .explorerInput {
+    margin: -1px;
     outline: none;
-    border: none;
-    background: transparent;
-    background-color: var(--color-explorer-active);
-    padding-left: calc(var(--explorer-layer) * var(--explorer-layer-offset));
-    color: inherit;
+    border: 1px dashed var(--color-foreground-inactive);
+    overflow: hidden;
+    & input {
+      flex: 1;
+      outline: none;
+      border: none;
+      background: transparent;
+      min-width: 0px;
+    }
   }
 
-  & button {
+  & button,
+  & .explorerInput {
     display: flex;
     position: relative;
     align-items: center;
@@ -175,6 +196,7 @@ iframe {
       background-color: var(--color-explorer-active);
     }
 
+    &[data-expanded]:not(.active),
     &:hover:not(.active) {
       background-color: var(--color-background-hover);
     }
@@ -222,6 +244,8 @@ iframe {
 
   & .closeTabButton {
     opacity: 0;
+    padding-right: var(--margin);
+    padding-left: var(--margin);
 
     &:hover {
       background-color: var(--color-background-hover);
@@ -345,7 +369,73 @@ iframe {
   }
 }
 
-[data-active-pane] * {
-  pointer-events: none;
+/* Context Menu */
+
+.contextMenu {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--margin) / 2);
+  transform-origin: var(--kb-menu-content-transform-origin);
+  animation: contentHide 250ms ease-in forwards;
+  outline: none;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+  border: 1px solid var(--color-foreground-inactive);
+  border-radius: 6px;
+  background-color: var(--color-explorer);
+  padding: var(--margin);
+  min-width: 160px;
+}
+
+.contextMenu[data-expanded] {
+  animation: contentShow 250ms ease-out;
+}
+
+.contextMenuItem {
+  display: flex;
+  position: relative;
+  align-items: center;
+  cursor: pointer;
+  outline: none;
+  border-radius: 2px;
+  padding-right: calc(var(--margin) / 2);
+  padding-left: calc(var(--margin) / 2);
+  color: var(--color-foreground);
+  font-size: 10pt;
+  line-height: 16pt;
   user-select: none;
+}
+
+.contextMenuItem[data-highlighted] {
+  outline: none;
+  background-color: var(--color-background-hover);
+}
+
+.contextMenuSeparator {
+  margin: 6px;
+  border: none;
+  background: var(--color-foreground-inactive);
+  height: 1px;
+}
+
+@keyframes contentShow {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes contentHide {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.96);
+    opacity: 0;
+  }
 }
