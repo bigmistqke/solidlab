@@ -63,7 +63,8 @@ body[data-color-mode='dark'] {
   & button {
     color: var(--color-foreground-inactive);
 
-    &:hover {
+    &:hover,
+    &.active {
       color: var(--color-foreground);
     }
   }
@@ -101,13 +102,13 @@ iframe {
   & div {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 20px;
     font-size: 25px;
     line-height: 25px;
   }
 }
 
-.explorerPane {
+.actionPane {
   display: flex;
   flex: 0 var(--explorer-width) !important;
   background-color: var(--color-explorer);
@@ -151,6 +152,7 @@ iframe {
       outline: none;
       border: none;
       background: transparent;
+
       min-width: 0px;
     }
   }
@@ -376,7 +378,7 @@ iframe {
   flex-direction: column;
   gap: calc(var(--margin) / 2);
   transform-origin: var(--kb-menu-content-transform-origin);
-  animation: contentHide 250ms ease-in forwards;
+  animation: contextMenuHide 50ms ease-in forwards;
   outline: none;
   box-shadow:
     0 4px 6px -1px rgb(0 0 0 / 0.1),
@@ -389,7 +391,7 @@ iframe {
 }
 
 .contextMenu[data-expanded] {
-  animation: contentShow 250ms ease-out;
+  animation: contextMenuShow 50ms ease-out;
 }
 
 .contextMenuItem {
@@ -419,7 +421,7 @@ iframe {
   height: 1px;
 }
 
-@keyframes contentShow {
+@keyframes contextMenuShow {
   from {
     transform: scale(0.96);
     opacity: 0;
@@ -429,7 +431,260 @@ iframe {
     opacity: 1;
   }
 }
-@keyframes contentHide {
+@keyframes contextMenuHide {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+}
+
+/* Dialog */
+
+.dialogTrigger {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  appearance: none;
+  transition: 50ms background-color;
+  outline: none;
+  border-radius: 6px;
+  padding: 0 16px;
+  width: auto;
+  height: 40px;
+  color: white;
+  font-size: 16px;
+  line-height: 0;
+}
+.dialogOverlay {
+  position: fixed;
+  z-index: 50;
+  animation: overlayHide 50ms ease 50ms forwards;
+  transition: background 0s;
+  inset: 0;
+  background-color: rgb(0 0 0 / 0.2);
+}
+.dialogOverlay[data-expanded] {
+  animation: overlayShow 50ms ease;
+}
+.dialogPositioner {
+  display: flex;
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+  inset: 0;
+}
+.dialogContent {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--margin) * 2);
+  z-index: 50;
+  animation: dialogContentHide 50ms ease-in forwards;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  border: 1px solid var(--color-foreground-inactive);
+  border-radius: 6px;
+  background-color: var(--color-editor);
+  padding: calc(var(--margin) * 2);
+  width: 425px;
+  max-width: min(calc(100vw - 16px), 500px);
+  color: var(--color-foreground);
+  font-size: 12pt;
+}
+.dialogContent[data-expanded] {
+  animation: dialogContentShow 50ms ease-out;
+}
+.dialogTitle {
+  font-family: geist-black;
+}
+.dialogBar {
+  margin: 0px;
+  padding: 0px;
+  height: 16pt;
+  line-height: 16pt;
+}
+.dialogCloseButton {
+  width: 16px;
+  width: 16pt;
+  height: 16px;
+  height: 16pt;
+  color: var(--color-foreground-inactive);
+  &:hover {
+    color: var(--color-foreground);
+  }
+}
+.dialogCloseButtonContainer {
+  display: flex;
+  justify-content: end;
+}
+.dialogBody {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  flex: 1;
+  gap: var(--margin);
+}
+.dialogSeparator {
+  background: var(--color-foreground-inactive);
+}
+.dialogDescription {
+  font-size: 16px;
+}
+.dialogColumn {
+  display: flex;
+  flex-direction: column;
+}
+.dialogOptions {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: end;
+  gap: calc(var(--margin) / 2);
+  & .dialogSeparator {
+    margin: 0px calc(var(--margin) / 2);
+    height: 1px;
+  }
+
+  & > .dialogOption,
+  & > .dialogOptionContainer > .dialogOption {
+    padding: calc(var(--margin) / 2) var(--margin);
+  }
+
+  & > .dialogOptionContainer > .dialogOption {
+    display: flex;
+    flex: 1;
+    gap: var(--margin);
+    text-align: left;
+  }
+
+  & > .dialogOption,
+  & > .dialogOptionContainer {
+    display: flex;
+    align-items: center;
+    gap: var(--margin);
+    border-radius: 3px;
+    overflow: hidden;
+    font-size: 10pt;
+    letter-spacing: 0.5px;
+    text-align: left;
+
+    &:hover,
+    &:has([aria-expanded='true']) {
+      background-color: var(--color-background-hover);
+
+      & .dialogButtonIcon {
+        opacity: 1;
+      }
+    }
+
+    & .dialogOptionIcon {
+      opacity: 0.8;
+      font-size: 12pt;
+    }
+    & .dialogOptionIcon[aria-haspopup] {
+      cursor: pointer;
+      border-radius: 2px;
+      padding: calc(var(--margin) / 2);
+    }
+    & .dialogOptionIcon[aria-haspopup]:hover,
+    & .dialogOptionIcon[aria-expanded='true'] {
+      background: var(--color-foreground-inactive);
+    }
+  }
+}
+@keyframes overlayShow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes overlayHide {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes dialogContentShow {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes dialogContentHide {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+}
+
+.popoverContent {
+  transform-origin: var(--kb-popover-content-transform-origin);
+  z-index: 50;
+  animation: popoverContentHide 50ms ease-in forwards;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  border: 1px solid var(--color-foreground-inactive);
+  border-radius: 6px;
+  background-color: var(--color-editor);
+  padding: 12px;
+  max-width: min(calc(100vw - 16px), 380px);
+  color: var(--color-foreground);
+}
+.popoverContent[data-expanded] {
+  animation: popoverContentShow 50ms ease-out;
+}
+.popoverHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.popoverCloseButton {
+  & span {
+    color: var(--color-foreground-inactive);
+  }
+
+  &:hover span {
+    color: var(--color-foreground);
+  }
+}
+.popoverTitle {
+  font-weight: 500;
+  font-size: 16px;
+}
+.popoverDescription {
+  font-size: 14px;
+}
+@keyframes popoverContentShow {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes popoverContentHide {
   from {
     transform: scale(1);
     opacity: 1;

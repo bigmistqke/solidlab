@@ -1,5 +1,7 @@
 import { Split } from '@bigmistqke/solid-grid-split'
+import { Popover } from '@kobalte/core/Popover'
 import { ContextMenu } from '@kobalte/core/context-menu'
+import { Dialog } from '@kobalte/core/dialog'
 import { makePersisted } from '@solid-primitives/storage'
 import { WebContainer } from '@webcontainer/api'
 import { FitAddon } from '@xterm/addon-fit'
@@ -64,6 +66,123 @@ function Handle(props: { column?: boolean }) {
     <Split.Handle size="0px" class={clsx(styles.handle, props.column && styles.column)}>
       <div />
     </Split.Handle>
+  )
+}
+
+/**********************************************************************************/
+/*                                                                                */
+/*                                 Manager Modal                                  */
+/*                                                                                */
+/**********************************************************************************/
+
+export function ManagerModal() {
+  return (
+    <Dialog.Portal>
+      <Dialog.Overlay class={styles.dialogOverlay} />
+      <div class={styles.dialogPositioner}>
+        <Dialog.Content class={styles.dialogContent}>
+          <div class={styles.dialogBody}>
+            <div>
+              <Dialog.Title class={clsx(styles.dialogBar, styles.dialogTitle)}>
+                SOLIDLAB
+              </Dialog.Title>
+              <div class={styles.dialogBar} />
+              <div class={styles.dialogOptions}>
+                <button class={styles.dialogOption}>
+                  <Codicon kind="new-file" class={styles.dialogOptionIcon} />
+                  <span class={styles.dialogButtonTitle}>New Project</span>
+                </button>
+                <button class={styles.dialogOption}>
+                  <Codicon kind="save" class={styles.dialogOptionIcon} />
+                  <span class={styles.dialogButtonTitle}>Save Project</span>
+                </button>
+                <div class={styles.dialogSeparator} />
+                <button class={styles.dialogOption}>
+                  <Codicon kind="folder-opened" class={styles.dialogOptionIcon} />
+                  <span class={styles.dialogButtonTitle}>Open Project</span>
+                </button>
+                <button class={styles.dialogOption}>
+                  <Codicon kind="arrow-down" class={styles.dialogOptionIcon} />
+                  <span class={styles.dialogButtonTitle}>Import Project</span>
+                </button>
+              </div>
+              <div class={styles.dialogBar} />
+            </div>
+            <div class={styles.dialogSeparator} />
+            <div class={styles.dialogColumn}>
+              <div class={clsx(styles.dialogBar, styles.dialogCloseButtonContainer)}>
+                <Dialog.CloseButton
+                  as={CodiconButton}
+                  kind="close"
+                  class={styles.dialogCloseButton}
+                />
+              </div>
+              <div class={styles.dialogBar} />
+              <div class={styles.dialogOptions}>
+                <button class={styles.dialogOption}>
+                  <Codicon kind="share" class={styles.dialogOptionIcon} />
+                  <span class={styles.dialogButtonTitle}>Share Project</span>
+                </button>
+                <button class={styles.dialogOption}>
+                  <Codicon kind="file-zip" class={styles.dialogOptionIcon} />
+                  <span class={styles.dialogButtonTitle}>Export As Zip</span>
+                </button>
+                <button class={styles.dialogOption}>
+                  <Codicon kind="github" class={styles.dialogOptionIcon} />
+                  <span class={styles.dialogButtonTitle}>Publish To Github</span>
+                </button>
+                <div class={styles.dialogSeparator} />
+                <div class={styles.dialogOptionContainer}>
+                  <button class={styles.dialogOption}>
+                    <Codicon kind="check" class={styles.dialogOptionIcon} />
+                    <span class={styles.dialogButtonTitle}>WebContainers</span>
+                  </button>
+                  <Popover>
+                    <Popover.Trigger
+                      as={Codicon}
+                      kind="question"
+                      class={styles.dialogOptionIcon}
+                      /* optical padding */
+                      style={{
+                        'margin-right': '-1px',
+                        'padding-left': 'calc(var(--margin) / 2 + 1px)',
+                      }}
+                    />
+                    <Popover.Portal>
+                      <Popover.Content class={styles.popoverContent}>
+                        <Popover.Arrow />
+                        <div class={styles.popoverHeader}>
+                          <Popover.Title class={styles.popoverTitle}>
+                            About WebContainers
+                          </Popover.Title>
+                          <Popover.CloseButton class={styles.popoverCloseButton}>
+                            <Codicon kind="close" />
+                          </Popover.CloseButton>
+                        </div>
+                        <Popover.Description class={styles.popoverDescription}>
+                          <a href="https://webcontainers.io/guides/introduction" target="__blank">
+                            WebContainers
+                          </a>{' '}
+                          provide a browser-based environment for running Node.js applications and
+                          executing operating system commands directly within your browser tab.
+                          <br />
+                          <br />
+                          If WebContainers is disabled SolidLab falls back to the client-only{' '}
+                          <a href="https://github.com/bigmistqke/repl">@bigmistqke/repl</a>. This
+                          runtime is not suited for handling SolidStart applications, but can be
+                          useful for quick prototyping of client-side code.
+                        </Popover.Description>
+                      </Popover.Content>
+                    </Popover.Portal>
+                  </Popover>
+                </div>
+              </div>
+              <div class={styles.dialogBar} />
+            </div>
+          </div>
+        </Dialog.Content>
+      </div>
+    </Dialog.Portal>
   )
 }
 
@@ -201,7 +320,7 @@ function Explorer() {
     repl.setNewContent({ type, path })
   }
   return (
-    <Split.Pane max="50px" size="200px" class={clsx(styles.pane, styles.explorerPane)}>
+    <Split.Pane max="50px" size="200px" class={clsx(styles.pane, styles.actionPane)}>
       <div class={clsx(styles.explorerBar, styles.bar)}>
         <CodiconButton kind="new-file" onClick={() => addNew('file')} />
         <CodiconButton kind="new-folder" onClick={() => addNew('directory')} />
@@ -511,10 +630,21 @@ function SideBar() {
   return (
     <Split.Pane size="40px" class={styles.sideBar}>
       <div>
-        <CodiconButton kind="add" style={{ transform: 'rotateZ(90deg)' }} />
-        <CodiconButton kind="search" />
-        <CodiconButton kind="arrow-down" />
-        <CodiconButton kind="arrow-up" />
+        <Dialog>
+          <Dialog.Trigger as={CodiconButton} kind="three-bars" />
+          <ManagerModal />
+        </Dialog>
+        <CodiconButton
+          class={clsx(repl.actionMode() === 'explorer' && styles.active)}
+          kind="files"
+          onClick={() => repl.setActionMode('explorer')}
+        />
+        <CodiconButton
+          class={clsx(repl.actionMode() === 'search' && styles.active)}
+          kind="search"
+          onClick={() => repl.setActionMode('search')}
+        />
+        <CodiconButton kind="fold-down" />
       </div>
       <div>
         <CodiconButton
@@ -601,6 +731,8 @@ function Frame() {
 
 const SolidLabContext = createContext<{
   container: Resource<WebContainer>
+  actionMode: Accessor<'search' | 'explorer'>
+  setActionMode: Setter<'search' | 'explorer'>
   selectedDirectory: Accessor<string | undefined>
   setSelectedDirectory: Setter<string | undefined>
   setNewContent: Setter<{ path: string; type: 'directory' | 'file' } | undefined>
@@ -651,6 +783,8 @@ export function SolidLab() {
     { path: string; type: 'file' | 'directory' } | undefined
   >(undefined)
 
+  const [actionMode, setActionMode] = createSignal<'explorer' | 'search'>('explorer')
+
   const [packagesInstalled] = createResource(container, async container => {
     container.on('server-ready', (port, url) => {
       console.log('port is ', port)
@@ -691,6 +825,8 @@ export function SolidLab() {
     <SolidLabContext.Provider
       value={{
         container,
+        actionMode,
+        setActionMode,
         selectedDirectory,
         setSelectedDirectory,
         newContent,
