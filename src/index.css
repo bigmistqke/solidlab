@@ -8,6 +8,13 @@
 @font-face {
   font-style: normal;
   font-weight: normal;
+  src: url('./assets/monument-extended.ttf');
+  font-family: geist-black;
+}
+
+@font-face {
+  font-style: normal;
+  font-weight: normal;
   src: url('./assets/geist-mono/GeistMono-Regular.ttf');
   font-family: geist-mono;
 }
@@ -21,7 +28,8 @@ body {
 }
 
 button,
-input {
+input,
+a {
   cursor: pointer;
   border: none;
   background-color: transparent;
@@ -36,8 +44,14 @@ h1 {
   all: unset;
 }
 
+h2 {
+  all: unset;
+  font-size: 16pt;
+}
+
 * {
   transition:
     color 0.125s,
+    opacity 0.125s,
     background-color 0.125s;
 }
