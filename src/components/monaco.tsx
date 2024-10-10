@@ -38,7 +38,7 @@ export function Monaco() {
     ),
   )
 
-  whenEffect(every(repl.container, monaco, editor), async ([container, monaco, editor]) => {
+  whenEffect(every(repl.webContainer, monaco, editor), async ([container, monaco, editor]) => {
     createEffect(() => {
       if (repl.colorMode() === 'dark') {
         nightOwl.colors['editor.background'] = '#00000000'
@@ -56,7 +56,7 @@ export function Monaco() {
       createEffect(async () => {
         const path = repl.activeTab()
         if (path) {
-          const uri = monaco.Uri.parse(`file://${path.replace('./', '')}`)
+          const uri = monaco.Uri.parse(`file://${path}`)
 
           const model =
             monaco.editor.getModel(uri) ||
