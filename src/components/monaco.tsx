@@ -38,6 +38,10 @@ export function Monaco() {
     ),
   )
 
+  whenEffect(repl.activeTab, () => {
+    editor()?.focus()
+  })
+
   whenEffect(every(repl.webContainer, monaco, editor), async ([container, monaco, editor]) => {
     createEffect(() => {
       if (repl.colorMode() === 'dark') {
@@ -225,8 +229,11 @@ function watchLocalFiles(container: WebContainer, monaco: MonacoType) {
 
     for (const [path, source] of files) {
       const uri = monaco.Uri.parse(`file:///${path.replace('./', '')}`)
-      if (!monaco.editor.getModel(uri)) {
+      const model = monaco.editor.getModel(uri)
+      if (!model) {
         monaco.editor.createModel(source, undefined, uri)
+      } else {
+        model.setValue(source)
       }
     }
 

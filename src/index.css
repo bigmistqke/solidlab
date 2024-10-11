@@ -40,11 +40,12 @@ a {
   font-family: inherit;
 }
 
-h1 {
+h2 {
   all: unset;
+  font-size: 16pt;
 }
 
-h2 {
+h3 {
   all: unset;
   font-size: 16pt;
 }

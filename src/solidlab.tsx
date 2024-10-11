@@ -68,12 +68,12 @@ function Handle(props: { column?: boolean }) {
 /*                                                                                */
 /**********************************************************************************/
 
-export function ManagerModal() {
+export function MainDialog() {
   return (
     <Dialog.Portal>
       <Dialog.Overlay class={styles.dialogOverlay} />
       <div class={styles.dialogPositioner}>
-        <Dialog.Content class={styles.dialogContent}>
+        <Dialog.Content class={clsx(styles.dialogContent, styles.mainDialogContent)}>
           <div class={styles.dialogBody}>
             <div>
               <Dialog.Title class={clsx(styles.dialogBar, styles.dialogTitle)}>
@@ -173,6 +173,94 @@ export function ManagerModal() {
               <div class={styles.dialogBar} />
             </div>
           </div>
+        </Dialog.Content>
+      </div>
+    </Dialog.Portal>
+  )
+}
+
+/**********************************************************************************/
+/*                                                                                */
+/*                                   NPM Modal                                    */
+/*                                                                                */
+/**********************************************************************************/
+
+export function NPMDialog() {
+  const solidlab = useSolidLab()
+
+  const [query, setQuery] = createSignal('')
+
+  const [results] = createResource(query, async query => {
+    if (!query) {
+      return []
+    }
+    const result = await fetch(`https://registry.npmjs.org/-/v1/search?text=${query}`).then(value =>
+      value.json(),
+    )
+    return result.objects || []
+  })
+
+  return (
+    <Dialog.Portal>
+      <Dialog.Overlay class={styles.dialogOverlay} />
+      <div class={styles.dialogPositioner}>
+        <Dialog.Content
+          class={clsx(styles.dialogContent, styles.npmDialog, query() && styles.hasContent)}
+        >
+          <div class={styles.npmInputContainer}>
+            <input
+              class={styles.npmInput}
+              onInput={e => setQuery(e.currentTarget.value)}
+              value={query()}
+              placeholder="Enter Package Name"
+            />
+            <Codicon kind={query() ? 'close' : 'search'} class={styles.npmInputIcon} />
+          </div>
+          <Show when={results.latest && results.latest.length > 0 && query() !== ''}>
+            <div class={styles.npmResults}>
+              <Index each={results.latest}>
+                {(result, index) => {
+                  return (
+                    <>
+                      <div class={styles.npmResult}>
+                        <div class={styles.npmResultHeader}>
+                          <h3>{result().package.name}</h3>
+                          <Codicon
+                            class={styles.npmResultHeaderIcon}
+                            as="a"
+                            kind="link"
+                            target="__blank"
+                            href={result().package.links.repository || result().package.links.npm}
+                          />
+                          <Dialog.CloseButton
+                            as={CodiconButton}
+                            kind="git-stash"
+                            class={styles.npmResultHeaderIcon}
+                            onClick={() => {
+                              solidlab.installPackage(result().package.name)
+                            }}
+                          />
+                        </div>
+                        <div class={styles.npmResultDescription}>
+                          {result().package.description}
+                        </div>
+                        <div class={styles.npmResultBottomBar}>
+                          <div class={styles.npmResultKeywords}>
+                            <Index each={result().package.keywords}>
+                              {keyword => <div class={styles.npmResultKeyword}>{keyword()}</div>}
+                            </Index>
+                          </div>
+                        </div>
+                      </div>
+                      <Show when={index !== results.latest.length - 1}>
+                        <div class={styles.separator} />
+                      </Show>
+                    </>
+                  )
+                }}
+              </Index>
+            </div>
+          </Show>
         </Dialog.Content>
       </div>
     </Dialog.Portal>
@@ -317,9 +405,7 @@ interface Match {
   }>
 }
 
-/**
- * SearchAndReplace component allows searching and replacing text within multiple files.
- */
+/** SearchAndReplace component allows searching and replacing text within multiple files. */
 export function SearchAndReplace() {
   const { search, setSearch, setSearchInput, webContainer } = useSolidLab()
 
@@ -457,9 +543,11 @@ function SearchResult(props: Match & { isLast: boolean }) {
         <Index each={props.ranges}>
           {range => (
             <button class={styles.searchResult} onClick={() => setActiveTab(props.path)}>
-              {props.source.slice(Math.max(0, range().start - 10), range().start)}
-              <em>{props.source.slice(range().start, range().end)}</em>
-              {props.source.slice(range().end, props.source.length)}
+              <span>
+                {props.source.slice(Math.max(0, range().start - 10), range().start)}
+                <em>{props.source.slice(range().start, range().end)}</em>
+                {props.source.slice(range().end, props.source.length)}
+              </span>
             </button>
           )}
         </Index>
@@ -801,7 +889,7 @@ function SideBar() {
       <div>
         <Dialog>
           <Dialog.Trigger as={CodiconButton} kind="three-bars" />
-          <ManagerModal />
+          <MainDialog />
         </Dialog>
         <CodiconButton
           class={clsx(solidlab.actionMode() === 'explorer' && styles.active)}
@@ -816,7 +904,10 @@ function SideBar() {
             solidlab.searchInput()?.focus()
           }}
         />
-        <CodiconButton kind="fold-down" />
+        <Dialog>
+          <Dialog.Trigger as={CodiconButton} kind="fold-down" />
+          <NPMDialog />
+        </Dialog>
       </div>
       <div>
         <CodiconButton
@@ -916,6 +1007,7 @@ const SolidLabContext = createContext<{
     isCaseSensitive: boolean
     isWholeWord: boolean
   }
+  installPackage: (packageName: string) => Promise<boolean>
   webContainer: Resource<WebContainer>
   terminal: TerminalInstance
   setSearchInput: Setter<HTMLInputElement | undefined>
@@ -1008,7 +1100,7 @@ export function SolidLab() {
 
   whenEffect(every(webContainer, packagesInstalled), async ([container]) => {
     terminal.writeln('pnpm dev')
-    const process = await container.spawn('pnpm', ['dev'])
+    const process = await container.spawn('npm', ['run', 'dev'])
     process.output.pipeTo(
       new WritableStream({
         write(data) {
@@ -1022,9 +1114,30 @@ export function SolidLab() {
     document.body.dataset.colorMode = colorMode()
   })
 
+  async function installPackage(packageName: string) {
+    const container = webContainer()
+    if (!container) {
+      throw `Trying to install a package before WebContainer is initialised`
+    }
+
+    terminal.writeln('npm install')
+
+    const installProcess = await container.spawn('npm', ['add', packageName])
+    installProcess.output.pipeTo(
+      new WritableStream({
+        write(data) {
+          terminal.writeln(data)
+        },
+      }),
+    )
+    await installProcess.exit
+    return true
+  }
+
   return (
     <SolidLabContext.Provider
       value={{
+        installPackage,
         search,
         setSearch,
         terminal,
