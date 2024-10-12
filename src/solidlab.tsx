@@ -3,6 +3,7 @@ import { Tooltip } from '@kobalte/core/Tooltip'
 import { ContextMenu } from '@kobalte/core/context-menu'
 import { Dialog } from '@kobalte/core/dialog'
 import { Skeleton } from '@kobalte/core/skeleton'
+import { Toast, toaster } from '@kobalte/core/toast'
 import { makePersisted } from '@solid-primitives/storage'
 import { WebContainer } from '@webcontainer/api'
 import { FitAddon } from '@xterm/addon-fit'
@@ -21,6 +22,7 @@ import {
   For,
   Index,
   JSX,
+  onCleanup,
   onMount,
   Resource,
   Setter,
@@ -28,6 +30,7 @@ import {
   useContext,
 } from 'solid-js'
 import { createStore, SetStoreFunction } from 'solid-js/store'
+import { Portal } from 'solid-js/web'
 import { Codicon } from './components/codicon/codicon'
 import { CodiconButton } from './components/codicon/codicon-button'
 import { LoaderAnimation } from './components/loader-animation'
@@ -176,6 +179,8 @@ export function MainDialog() {
               </div>
               <div class={styles.mainDialogBar} />
             </div>
+            <div class={styles.dialogSeparator} />
+            <div class={styles.mainDialogColumn}></div>
           </div>
         </Dialog.Content>
       </div>
@@ -209,7 +214,12 @@ export function NPMDialog() {
       <Dialog.Overlay class={styles.dialogOverlay} />
       <div class={styles.dialogPositioner}>
         <Dialog.Content
-          class={clsx(styles.dialogContent, styles.searchDialog, query() === '' && styles.closed)}
+          class={clsx(
+            styles.dialogContent,
+            styles.searchDialog,
+            styles.npmDialog,
+            query() === '' && styles.closed,
+          )}
         >
           <div class={styles.searchHeader}>
             <div class={styles.searchContainer}>
@@ -229,7 +239,7 @@ export function NPMDialog() {
                 {(result, index) => {
                   return (
                     <>
-                      <div class={styles.searchResultHeader}>
+                      <div class={clsx(styles.searchResultHeader, styles.sticky)}>
                         <h3>{result().package.name}</h3>
                         <Codicon
                           class={styles.searchResultHeaderIcon}
@@ -1463,7 +1473,35 @@ export function SolidLab() {
 
     terminal.writeln('npm install')
 
+    let id = toaster.promise(new Promise<void>(_resolve => {}), props => {
+      const [ellipsis, setEllipsis] = createSignal(0)
+
+      let timeout: number
+      function step() {
+        timeout = setTimeout(() => {
+          setEllipsis(number => number + 1)
+          step()
+        }, 500)
+      }
+      step()
+
+      onCleanup(() => clearTimeout(timeout))
+
+      return (
+        <Toast toastId={props.toastId} class={styles.toast} persistent>
+          <div class={styles.toastContent}>
+            <Toast.Title class={styles.toastTitle}>
+              Downloading {packageName}
+              <span innerHTML={'.'.repeat(ellipsis() % 4)} />
+              <span style={{ color: 'transparent' }} innerHTML={'.'.repeat(3 - (ellipsis() % 4))} />
+            </Toast.Title>
+          </div>
+        </Toast>
+      )
+    })
+
     const installProcess = await container.spawn('npm', ['add', packageName])
+
     installProcess.output.pipeTo(
       new WritableStream({
         write(data) {
@@ -1472,6 +1510,15 @@ export function SolidLab() {
       }),
     )
     await installProcess.exit
+
+    toaster.update(id, props => (
+      <Toast toastId={props.toastId} class={styles.toast}>
+        <div class={styles.toastContent}>
+          <Toast.Title class={styles.toastTitle}>{packageName} installed!</Toast.Title>
+        </div>
+      </Toast>
+    ))
+
     return true
   }
 
@@ -1536,6 +1583,11 @@ export function SolidLab() {
         <EditorPane />
         <Handle />
         <Split type="row" class={styles.pane}>
+          <Portal>
+            <Toast.Region duration={3000}>
+              <Toast.List class={styles.toastList} />
+            </Toast.Region>
+          </Portal>
           <Frame />
           <Handle column />
           <Terminal />

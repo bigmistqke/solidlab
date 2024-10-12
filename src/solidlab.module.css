@@ -786,6 +786,7 @@ iframe {
   justify-content: center;
   align-items: center;
   z-index: 50;
+  margin-bottom: calc(var(--margin) * 2);
   inset: 0;
 }
 .dialogContent {
@@ -799,7 +800,6 @@ iframe {
   border: 1px solid var(--color-foreground-inactive);
   border-radius: 6px;
   background-color: var(--color-editor);
-  width: 750px;
   color: var(--color-foreground);
   font-size: 12pt;
 }
@@ -893,6 +893,7 @@ iframe {
 
 .mainDialogContent {
   padding: calc(var(--margin) * 2);
+  width: 500px;
 }
 .mainDialogBar {
   display: flex;
@@ -1088,6 +1089,7 @@ body[data-color-mode='dark'] .searchDialog {
 }
 
 .searchDialog {
+  --search-dialog-width: 650px;
   --color-label-primitive: #ff6347;
   --color-label-router: #4682b4;
   --color-label-data: #32cd32;
@@ -1102,6 +1104,7 @@ body[data-color-mode='dark'] .searchDialog {
 
   transition: height 0.25s;
   box-sizing: border-box;
+  min-width: var(--search-dialog-width);
   height: 46px;
   overflow: hidden;
   scrollbar-color: var(--color-foreground-inactive) transparent;
@@ -1245,7 +1248,8 @@ body[data-color-mode='dark'] .searchDialog {
     position: relative;
     flex-direction: column;
     flex-wrap: nowrap;
-    gap: calc(var(--margin) * 3);
+    gap: calc(var(--margin) * 2);
+    width: var(--search-dialog-width);
     overflow-x: hidden;
     overflow-y: auto;
   }
@@ -1264,6 +1268,7 @@ body[data-color-mode='dark'] .searchDialog {
     gap: var(--margin);
     box-shadow: 0px 0px 25px var(--color-editor);
     background-color: var(--color-editor);
+    padding-right: var(--margin);
     padding-left: calc(var(--margin) * 2);
     min-height: 52px;
     line-height: 52px;
@@ -1276,8 +1281,11 @@ body[data-color-mode='dark'] .searchDialog {
 
     & > h3 {
       flex: 1;
+      overflow: hidden;
       font-weight: 900;
       line-height: 30px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     & > .searchResultHeaderIcon {
@@ -1432,4 +1440,92 @@ body[data-color-mode='dark'] .searchDialog {
   inset: 0;
   background-color: var(--color-foreground);
   content: '';
+}
+
+/**********************************************************************************/
+/*                                                                                */
+/*                                      Toast                                     */
+/*                                                                                */
+/**********************************************************************************/
+
+.toastList {
+  display: flex;
+  position: fixed;
+  top: 30px;
+  right: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 9999;
+  margin: 0;
+  outline: none;
+  padding: var(--margin);
+  padding-right: calc(var(--margin) * 2);
+  width: 400px;
+  max-width: 100vw;
+  list-style: none;
+}
+.toast {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  border: 1px solid var(--color-foreground-inactive);
+  border-radius: 6px;
+  background-color: var(--color-editor);
+  padding: calc(var(--margin) / 2) var(--margin);
+  color: var(--color-foreground);
+  font-size: 10pt;
+}
+.toast[data-opened] {
+  animation: slideIn 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.toast[data-closed] {
+  animation: hide 100ms ease-in;
+}
+.toast[data-swipe='move'] {
+  transform: translateX(var(--kb-toast-swipe-move-x));
+}
+.toast[data-swipe='cancel'] {
+  transform: translateX(0);
+  transition: transform 200ms ease-out;
+}
+.toast[data-swipe='end'] {
+  animation: swipeOut 100ms ease-out;
+}
+.toastContent {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+.toastTitle {
+  color: var(--color-foreground);
+}
+@keyframes hide {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes slideIn {
+  from {
+    transform: translateX(calc(100% + var(--viewport-padding)));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes swipeOut {
+  from {
+    transform: translateX(var(--kb-toast-swipe-end-x));
+  }
+  to {
+    transform: translateX(calc(100% + var(--viewport-padding)));
+  }
 }
