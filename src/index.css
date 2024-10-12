@@ -40,6 +40,10 @@ a {
   font-family: inherit;
 }
 
+button:focus-visible {
+  outline: none;
+}
+
 h2 {
   all: unset;
   font-size: 16pt;

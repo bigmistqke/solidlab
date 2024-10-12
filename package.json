@@ -28,6 +28,7 @@
     "@xterm/xterm": "^5.5.0",
     "clsx": "^2.1.1",
     "monaco-themes": "^0.4.4",
+    "solid-heroicons": "^3.2.4",
     "solid-js": "^1.8.11"
   },
   "packageManager": "pnpm@9.1.1",

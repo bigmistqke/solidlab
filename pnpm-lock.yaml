@@ -38,6 +38,9 @@ importers:
       monaco-themes:
         specifier: ^0.4.4
         version: 0.4.4
+      solid-heroicons:
+        specifier: ^3.2.4
+        version: 3.2.4(solid-js@1.8.11)
       solid-js:
         specifier: ^1.8.11
         version: 1.8.11
@@ -857,6 +860,11 @@ packages:
         optional: true
       vite:
         optional: true
+
+  solid-heroicons@3.2.4:
+    resolution: {integrity: sha512-u6BMdFLvkJnvUGYzdFcWp1wvJ4hb9Y1zd3AbZ9D3bUmmiy9jBzNZX+RcqBCI2EKRvdQwAb1UB9bkESfqfhayDg==}
+    peerDependencies:
+      solid-js: '>= ^1.2.5'
 
   solid-js@1.8.11:
     resolution: {integrity: sha512-WdwmER+TwBJiN4rVQTVBxocg+9pKlOs41KzPYntrC86xO5sek8TzBYozPEZPL1IRWDouf2lMrvSbIs3CanlPvQ==}
@@ -1739,6 +1747,10 @@ snapshots:
       vite: 5.0.11
     transitivePeerDependencies:
       - supports-color
+
+  solid-heroicons@3.2.4(solid-js@1.8.11):
+    dependencies:
+      solid-js: 1.8.11
 
   solid-js@1.8.11:
     dependencies:

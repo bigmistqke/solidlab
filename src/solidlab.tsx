@@ -1,7 +1,8 @@
 import { Split } from '@bigmistqke/solid-grid-split'
-import { Popover } from '@kobalte/core/Popover'
+import { Tooltip } from '@kobalte/core/Tooltip'
 import { ContextMenu } from '@kobalte/core/context-menu'
 import { Dialog } from '@kobalte/core/dialog'
+import { Skeleton } from '@kobalte/core/skeleton'
 import { makePersisted } from '@solid-primitives/storage'
 import { WebContainer } from '@webcontainer/api'
 import { FitAddon } from '@xterm/addon-fit'
@@ -13,6 +14,7 @@ import {
   Accessor,
   batch,
   createContext,
+  createMemo,
   createRenderEffect,
   createResource,
   createSignal,
@@ -30,9 +32,15 @@ import { Codicon } from './components/codicon/codicon'
 import { CodiconButton } from './components/codicon/codicon-button'
 import { LoaderAnimation } from './components/loader-animation'
 import { Monaco } from './components/monaco'
+import utilities from './solidex'
+import {
+  ResourceCategory,
+  ResourceCategoryName,
+  Resource as ResourceKind,
+} from './solidex/Ecosystem'
 import styles from './solidlab.module.css'
 import { composeRegex } from './utils/compose-regex'
-import { every, whenEffect } from './utils/conditionals'
+import { every, when, whenEffect } from './utils/conditionals'
 import { createFileSystemTree } from './utils/create-file-system-tree'
 import { createWritable } from './utils/create-writable'
 import { getMatchedRanges } from './utils/get-matched-ranges'
@@ -76,83 +84,79 @@ export function MainDialog() {
         <Dialog.Content class={clsx(styles.dialogContent, styles.mainDialogContent)}>
           <div class={styles.dialogBody}>
             <div>
-              <Dialog.Title class={clsx(styles.dialogBar, styles.dialogTitle)}>
+              <Dialog.Title class={clsx(styles.mainDialogBar, styles.dialogTitle)}>
                 SOLIDLAB
               </Dialog.Title>
-              <div class={styles.dialogBar} />
-              <div class={styles.dialogOptions}>
-                <button class={styles.dialogOption}>
-                  <Codicon kind="new-file" class={styles.dialogOptionIcon} />
+              <div class={styles.mainDialogBar} />
+              <div class={styles.mainDialogOptions}>
+                <button class={styles.mainDialogOption}>
+                  <Codicon kind="new-file" class={styles.mainDialogOptionIcon} />
                   <span class={styles.dialogButtonTitle}>New Project</span>
                 </button>
-                <button class={styles.dialogOption}>
-                  <Codicon kind="save" class={styles.dialogOptionIcon} />
+                <button class={styles.mainDialogOption}>
+                  <Codicon kind="save" class={styles.mainDialogOptionIcon} />
                   <span class={styles.dialogButtonTitle}>Save Project</span>
                 </button>
                 <div class={styles.dialogSeparator} />
-                <button class={styles.dialogOption}>
-                  <Codicon kind="folder-opened" class={styles.dialogOptionIcon} />
+                <button class={styles.mainDialogOption}>
+                  <Codicon kind="folder-opened" class={styles.mainDialogOptionIcon} />
                   <span class={styles.dialogButtonTitle}>Open Project</span>
                 </button>
-                <button class={styles.dialogOption}>
-                  <Codicon kind="arrow-down" class={styles.dialogOptionIcon} />
+                <button class={styles.mainDialogOption}>
+                  <Codicon kind="arrow-down" class={styles.mainDialogOptionIcon} />
                   <span class={styles.dialogButtonTitle}>Import Project</span>
                 </button>
               </div>
-              <div class={styles.dialogBar} />
+              <div class={styles.mainDialogBar} />
             </div>
             <div class={styles.dialogSeparator} />
-            <div class={styles.dialogColumn}>
-              <div class={clsx(styles.dialogBar, styles.dialogCloseButtonContainer)}>
-                <Dialog.CloseButton
-                  as={CodiconButton}
-                  kind="close"
-                  class={styles.dialogCloseButton}
-                />
+            <div class={styles.mainDialogColumn}>
+              <div class={clsx(styles.mainDialogBar, styles.closeButtonContainer)}>
+                <Dialog.CloseButton as={CodiconButton} kind="close" class={styles.closeButton} />
               </div>
-              <div class={styles.dialogBar} />
-              <div class={styles.dialogOptions}>
-                <button class={styles.dialogOption}>
-                  <Codicon kind="share" class={styles.dialogOptionIcon} />
+              <div class={styles.mainDialogBar} />
+              <div class={styles.mainDialogOptions}>
+                <button class={styles.mainDialogOption}>
+                  <Codicon kind="share" class={styles.mainDialogOptionIcon} />
                   <span class={styles.dialogButtonTitle}>Share Project</span>
                 </button>
-                <button class={styles.dialogOption}>
-                  <Codicon kind="file-zip" class={styles.dialogOptionIcon} />
+                <button class={styles.mainDialogOption}>
+                  <Codicon kind="file-zip" class={styles.mainDialogOptionIcon} />
                   <span class={styles.dialogButtonTitle}>Export As Zip</span>
                 </button>
-                <button class={styles.dialogOption}>
-                  <Codicon kind="github" class={styles.dialogOptionIcon} />
+                <button class={styles.mainDialogOption}>
+                  <Codicon kind="github" class={styles.mainDialogOptionIcon} />
                   <span class={styles.dialogButtonTitle}>Publish To Github</span>
                 </button>
                 <div class={styles.dialogSeparator} />
-                <div class={styles.dialogOptionContainer}>
-                  <button class={styles.dialogOption}>
-                    <Codicon kind="check" class={styles.dialogOptionIcon} />
+                <div class={styles.mainDialogOptionContainer}>
+                  <button class={styles.mainDialogOption}>
+                    <Codicon kind="check" class={styles.mainDialogOptionIcon} />
                     <span class={styles.dialogButtonTitle}>WebContainers</span>
                   </button>
-                  <Popover>
-                    <Popover.Trigger
-                      as={Codicon}
+                  <Tooltip closeDelay={500} openDelay={125}>
+                    <Tooltip.Trigger
+                      as={CodiconButton}
                       kind="question"
-                      class={styles.dialogOptionIcon}
+                      class={styles.mainDialogOptionIcon}
                       /* optical padding */
                       style={{
-                        'margin-right': '-1px',
                         'padding-left': 'calc(var(--margin) / 2 + 1px)',
                       }}
                     />
-                    <Popover.Portal>
-                      <Popover.Content class={styles.popoverContent}>
-                        <Popover.Arrow />
-                        <div class={styles.popoverHeader}>
-                          <Popover.Title class={styles.popoverTitle}>
-                            About WebContainers
-                          </Popover.Title>
-                          <Popover.CloseButton class={styles.popoverCloseButton}>
-                            <Codicon kind="close" />
-                          </Popover.CloseButton>
+                    <Tooltip.Portal>
+                      <Tooltip.Content class={styles.popoverContent}>
+                        <Tooltip.Arrow />
+                        <div
+                          class={clsx(
+                            styles.popoverHeader,
+                            styles.closeButtonContainer,
+                            styles.mainDialogBar,
+                          )}
+                        >
+                          <h2 class={styles.popoverTitle}>About WebContainers</h2>
                         </div>
-                        <Popover.Description class={styles.popoverDescription}>
+                        <div class={styles.popoverDescription}>
                           <a href="https://webcontainers.io/guides/introduction" target="__blank">
                             WebContainers
                           </a>{' '}
@@ -164,13 +168,13 @@ export function MainDialog() {
                           <a href="https://github.com/bigmistqke/repl">@bigmistqke/repl</a>. This
                           package is not suited for SolidStart applications, but can be useful for
                           quick prototyping of client-side code.
-                        </Popover.Description>
-                      </Popover.Content>
-                    </Popover.Portal>
-                  </Popover>
+                        </div>
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip>
                 </div>
               </div>
-              <div class={styles.dialogBar} />
+              <div class={styles.mainDialogBar} />
             </div>
           </div>
         </Dialog.Content>
@@ -205,53 +209,57 @@ export function NPMDialog() {
       <Dialog.Overlay class={styles.dialogOverlay} />
       <div class={styles.dialogPositioner}>
         <Dialog.Content
-          class={clsx(styles.dialogContent, styles.npmDialog, query() && styles.hasContent)}
+          class={clsx(styles.dialogContent, styles.searchDialog, query() === '' && styles.closed)}
         >
-          <div class={styles.npmInputContainer}>
-            <input
-              class={styles.npmInput}
-              onInput={e => setQuery(e.currentTarget.value)}
-              value={query()}
-              placeholder="Enter Package Name"
-            />
-            <Codicon kind={query() ? 'close' : 'search'} class={styles.npmInputIcon} />
+          <div class={styles.searchHeader}>
+            <div class={styles.searchContainer}>
+              <input
+                class={styles.search}
+                onInput={e => setQuery(e.currentTarget.value)}
+                value={query()}
+                placeholder="Enter Package Name"
+              />
+              <Codicon kind={query() ? 'close' : 'search'} class={styles.searchIcon} />
+            </div>
           </div>
           <Show when={results.latest && results.latest.length > 0 && query() !== ''}>
-            <div class={styles.npmResults}>
+            <div class={styles.searchResults}>
+              <div />
               <Index each={results.latest}>
                 {(result, index) => {
                   return (
                     <>
-                      <div class={styles.npmResult}>
-                        <div class={styles.npmResultHeader}>
-                          <h3>{result().package.name}</h3>
-                          <Codicon
-                            class={styles.npmResultHeaderIcon}
-                            as="a"
-                            kind="link"
-                            target="__blank"
-                            href={result().package.links.repository || result().package.links.npm}
-                          />
-                          <Dialog.CloseButton
-                            as={CodiconButton}
-                            kind="git-stash"
-                            class={styles.npmResultHeaderIcon}
-                            onClick={() => {
-                              solidlab.installPackage(result().package.name)
-                            }}
-                          />
-                        </div>
-                        <div class={styles.npmResultDescription}>
-                          {result().package.description}
-                        </div>
-                        <div class={styles.npmResultBottomBar}>
-                          <div class={styles.npmResultKeywords}>
+                      <div class={styles.searchResultHeader}>
+                        <h3>{result().package.name}</h3>
+                        <Codicon
+                          class={styles.searchResultHeaderIcon}
+                          as="a"
+                          kind="link"
+                          target="__blank"
+                          href={result().package.links.repository || result().package.links.npm}
+                        />
+                        <Dialog.CloseButton
+                          as={CodiconButton}
+                          kind="git-stash"
+                          class={styles.searchResultHeaderIcon}
+                          onClick={() => {
+                            solidlab.installPackage(result().package.name)
+                          }}
+                        />
+                      </div>
+                      <div class={styles.searchResultDescription}>
+                        {result().package.description}
+                      </div>
+                      <Show when={result().package.keywords}>
+                        <div class={styles.searchResultBottomBar}>
+                          <div class={styles.searchLabels}>
                             <Index each={result().package.keywords}>
-                              {keyword => <div class={styles.npmResultKeyword}>{keyword()}</div>}
+                              {keyword => <div class={styles.searchLabel}>{keyword()}</div>}
                             </Index>
                           </div>
                         </div>
-                      </div>
+                      </Show>
+
                       <Show when={index !== results.latest.length - 1}>
                         <div class={styles.separator} />
                       </Show>
@@ -259,11 +267,310 @@ export function NPMDialog() {
                   )
                 }}
               </Index>
+              <div />
             </div>
           </Show>
         </Dialog.Content>
       </div>
     </Dialog.Portal>
+  )
+}
+
+/**********************************************************************************/
+/*                                                                                */
+/*                                 Solidex Modal                                  */
+/*                                                                                */
+/**********************************************************************************/
+
+export function SolidexDialog() {
+  const solidlab = useSolidLab()
+
+  const [activeLabels, setActiveLabels] = createSignal([
+    ResourceCategory.Primitives,
+    ResourceCategory.Routers,
+    ResourceCategory.Data,
+    ResourceCategory.DataVisualization,
+    ResourceCategory.UI,
+    ResourceCategory.Plugins,
+    ResourceCategory.Starters,
+    ResourceCategory.BuildUtilities,
+    ResourceCategory.AddOn,
+    ResourceCategory.Testing,
+    ResourceCategory.Educational,
+  ])
+
+  const [data] = createResource(() => import('./solidex').then(module => module.default))
+
+  const [query, setQuery] = createSignal('')
+
+  const results = createMemo<ResourceKind[]>(
+    when(
+      data,
+      data => {
+        const lowercaseQuery = query().toLowerCase()
+        return data.filter(library => {
+          if (lowercaseQuery && !library.title.toLowerCase().includes(lowercaseQuery)) {
+            return false
+          }
+          return library.categories.find(category => activeLabels().includes(category))
+        })
+      },
+      () => [],
+    ),
+  )
+
+  const categories = (Object.keys(ResourceCategoryName) as Array<ResourceCategory>)
+    .map(category => {
+      const amount = utilities.filter(utility => utility.categories.includes(category)).length
+      return {
+        category,
+        amount,
+      }
+    })
+    .filter(({ amount }) => amount !== 0)
+    .sort((a, b) => b.amount - a.amount)
+
+  return (
+    <Dialog.Portal>
+      <Dialog.Overlay class={styles.dialogOverlay} />
+      <div class={styles.dialogPositioner}>
+        <Dialog.Content class={clsx(styles.dialogContent, styles.searchDialog)}>
+          <div class={styles.searchHeader}>
+            <div class={styles.searchContainer}>
+              <input
+                class={styles.search}
+                onInput={e => setQuery(e.currentTarget.value)}
+                value={query()}
+                placeholder="Enter Package Name"
+              />
+              <CodiconButton
+                disabled={query() === ''}
+                kind={query() ? 'close' : 'search'}
+                class={styles.searchIcon}
+              />
+            </div>
+            <div class={styles.searchLabels} style={{ 'flex-wrap': 'nowrap' }}>
+              <For each={categories}>
+                {({ category, amount }) => {
+                  return (
+                    <button
+                      onClick={() => {
+                        setActiveLabels(labels => {
+                          if (labels.includes(category)) {
+                            return labels.filter(label => label !== category)
+                          }
+                          return [...labels, category]
+                        })
+                      }}
+                      class={clsx(
+                        styles.searchLabel,
+                        styles[category],
+                        !activeLabels().includes(category) && styles.inactive,
+                      )}
+                    >
+                      {category} ({amount})
+                    </button>
+                  )
+                }}
+              </For>
+            </div>
+          </div>
+          <Show when={results()!.length > 0}>
+            <div class={styles.searchResults}>
+              <div />
+              <Index each={results()}>
+                {(result, index) => {
+                  return (
+                    <>
+                      <SolidexResult {...result()} activeLabels={activeLabels()} />
+                      <Show when={index !== results().length - 1}>
+                        <div class={styles.separator} />
+                      </Show>
+                    </>
+                  )
+                }}
+              </Index>
+              <div />
+            </div>
+          </Show>
+        </Dialog.Content>
+      </div>
+    </Dialog.Portal>
+  )
+}
+
+function SolidexResult(props: {
+  activeLabels: ResourceCategory[]
+  categories: readonly ResourceCategory[]
+  description?: string
+  keywords?: readonly string[]
+  link: string
+  package?: string | string[]
+  title: string
+}) {
+  const solidlab = useSolidLab()
+  const [visibleSubPackages, setVisibleSubPackages] = createSignal(false)
+  let description: HTMLDivElement
+  let header: HTMLDivElement
+  return (
+    <>
+      <div ref={header!} class={clsx(styles.searchResultHeader, styles.sticky)}>
+        <h3>{props.title}</h3>
+        <Codicon
+          class={styles.searchResultHeaderIcon}
+          as="a"
+          kind="link"
+          target="__blank"
+          href={props.link}
+        />
+        <Show
+          when={!Array.isArray(props.package) && (props.package || props.title)}
+          fallback={
+            <CodiconButton
+              kind={visibleSubPackages() ? 'remove' : 'add'}
+              class={styles.searchResultHeaderIcon}
+              onClick={() => {
+                setVisibleSubPackages(packages => !packages)
+                if (!visibleSubPackages()) {
+                  if (
+                    description.parentElement!.scrollTop > header.offsetTop - 1 &&
+                    description.parentElement!.scrollTop < header.offsetTop + 1
+                  ) {
+                    description!.scrollIntoView()
+                    requestAnimationFrame(() => {
+                      description.parentElement!.scrollTop =
+                        description.parentElement!.scrollTop - 42 - 30
+                    })
+                  }
+                } else {
+                }
+              }}
+            />
+          }
+        >
+          {packageName => (
+            <Dialog.CloseButton
+              as={CodiconButton}
+              kind={Array.isArray(props.package) ? 'add' : 'git-stash'}
+              class={styles.searchResultHeaderIcon}
+              onClick={() => solidlab.installPackage(packageName())}
+            />
+          )}
+        </Show>
+      </div>
+
+      <div ref={description!} class={styles.searchResultDescription}>
+        {props.description}
+      </div>
+      <Show when={!visibleSubPackages()}>
+        <div class={styles.searchResultBottomBar}>
+          <div class={styles.searchLabels}>
+            <Index each={props.categories}>
+              {category => (
+                <div
+                  class={clsx(
+                    styles.searchLabel,
+                    styles[category()],
+                    !props.activeLabels.includes(category()) && styles.inactive,
+                  )}
+                >
+                  {category()}
+                </div>
+              )}
+            </Index>
+          </div>
+          <div class={styles.searchLabels}>
+            <Index each={props.keywords}>
+              {keyword => <div class={styles.searchLabel}>{keyword()}</div>}
+            </Index>
+          </div>
+        </div>
+      </Show>
+
+      <Show when={visibleSubPackages() && Array.isArray(props.package) && props.package}>
+        {subPackage => (
+          <>
+            {/* <div class={styles.separator} /> */}
+            <Index each={subPackage()}>
+              {(title, index) => (
+                <>
+                  <SolidexSubPackage title={title()} index={index} />
+                  <Show when={index !== subPackage().length - 1}>
+                    <div class={clsx(styles.separator, styles.subPackageSeparator)} />
+                  </Show>
+                </>
+              )}
+            </Index>
+          </>
+        )}
+      </Show>
+    </>
+  )
+}
+
+function SolidexSubPackage(props: { title: string; index: number }) {
+  const solidlab = useSolidLab()
+
+  const [data] = createResource(() =>
+    fetch(`https://registry.npmjs.org/-/v1/search?text=${props.title}&size=1`)
+      .then(response => response.json())
+      .then(response => response.objects?.[0]?.package as Record<string, any>),
+  )
+
+  return (
+    <>
+      <div class={styles.searchResultHeader} style={{ 'padding-left': 'calc(var(--margin) * 3)' }}>
+        <h3>{props.title}</h3>
+        <Codicon
+          class={styles.searchResultHeaderIcon}
+          as="a"
+          kind="link"
+          target="__blank"
+          href={data()?.links.repository || data()?.links.npm}
+        />
+        <Dialog.CloseButton
+          as={CodiconButton}
+          kind={'git-stash'}
+          class={styles.searchResultHeaderIcon}
+          onClick={() => solidlab.installPackage(props.title)}
+        />
+      </div>
+
+      <div class={clsx(styles.searchResultDescription, styles.subPackageDescription)}>
+        <Show
+          when={data()}
+          fallback={
+            <Skeleton animate visible={!data()} class={styles.skeleton}>
+              This is a description of a library. This is a description of a library. This is a
+              description of a library. This is a description of a library.This is a description of
+              a library.
+            </Skeleton>
+          }
+        >
+          {data()?.description}
+        </Show>
+      </div>
+      <div class={clsx(styles.searchResultBottomBar, styles.subPackageBottomBar)}>
+        <div class={styles.searchLabels}>
+          <Show
+            when={data()}
+            fallback={
+              <Index each={['label', 'label', 'label']}>
+                {keyword => (
+                  <div class={styles.searchLabel} style={{ padding: '0px' }}>
+                    <Skeleton class={styles.skeleton}>{keyword()}</Skeleton>
+                  </div>
+                )}
+              </Index>
+            }
+          >
+            <Index each={data()?.keywords}>
+              {keyword => <div class={styles.searchLabel}>{keyword()}</div>}
+            </Index>
+          </Show>
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -331,7 +638,7 @@ function Tabs() {
           {getNameFromPath(props.path)}
         </button>
         <CodiconButton
-          class={styles.closeTabButton}
+          class={styles.barCloseButton}
           kind="close"
           onClick={() => solidlab.closeTab(props.path)}
         />
@@ -577,8 +884,16 @@ function Explorer() {
   return (
     <>
       <div class={clsx(styles.explorerBar, styles.bar)}>
-        <CodiconButton kind="new-file" onClick={() => addNew('file')} />
-        <CodiconButton kind="new-folder" onClick={() => addNew('directory')} />
+        <CodiconButton
+          class={styles.barCloseButton}
+          kind="new-file"
+          onClick={() => addNew('file')}
+        />
+        <CodiconButton
+          class={styles.barCloseButton}
+          kind="new-folder"
+          onClick={() => addNew('directory')}
+        />
       </div>
       <Show
         when={!solidlab.webContainer.loading}
@@ -908,6 +1223,28 @@ function SideBar() {
           <Dialog.Trigger as={CodiconButton} kind="fold-down" />
           <NPMDialog />
         </Dialog>
+        <Dialog>
+          <Dialog.Trigger as="button" class={styles.logoContainer}>
+            <svg
+              style={{ height: '100%', flex: 1 }}
+              width="43.920834mm"
+              height="41.089794mm"
+              viewBox="0 0 43.920834 41.089794"
+              version="1.1"
+              id="svg1"
+              xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+              xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+              xmlns="http://www.w3.org/2000/svg"
+              xmlns:svg="http://www.w3.org/2000/svg"
+            >
+              <path d="m 32.713955,18.905217 5.01029,-1.729752 4.57044,-7.7642973 c 0,0 -13.45745,-10.09358121 -23.86792,-7.7642933 l -0.76175,0.2588163 c -1.52347,0.5176134 -2.79304,1.2940451 -3.5548,2.3292878 l -0.50783,0.7764297 -4.0510301,7.1367828 c -1.22528,1.867949 -1.1804,4.324351 0.24234,6.58014 0.5703401,0.755761 1.2816201,1.433161 2.0906701,2.014616" />
+              <path d="M 37.724245,17.175465 C 25.921375,8.6262814 13.108335,6.7258638 9.5364549,12.170972" />
+              <path d="m 25.790285,39.174299 0.76173,-0.258808 c 1.81607,-0.544435 3.13773,-1.592787 3.87049,-2.87523 l 0.003,-4.88e-4 5.01253,-9.029338 c 1.01565,-1.811669 0.76173,-3.88215 -0.50784,-5.952622 -2.908,-3.703031 -7.72872,-5.238557 -12.18788,-3.882154 l -15.7426801,5.176195 -5.07522,9.055821 c 0,0 13.4545501,10.354912 23.8650401,7.766819 z" />
+              <path d="m 30.422505,36.040261 c 1.00887,-1.765758 0.90127,-3.975308 -0.56961,-5.924311 -2.90799,-3.70303 -7.72873,-5.238542 -12.18788,-3.882142 L 1.9237549,31.40941" />
+            </svg>
+          </Dialog.Trigger>
+          <SolidexDialog />
+        </Dialog>
       </div>
       <div>
         <CodiconButton
@@ -952,8 +1289,8 @@ function Frame() {
   })
 
   return (
-    <Split.Pane class={clsx(styles.pane, styles.framePane)}>
-      <div class={clsx(styles.locationBar, styles.bar)}>
+    <>
+      <Split.Pane size="30px" min="30px" max="30px" class={clsx(styles.locationBar, styles.bar)}>
         <CodiconButton
           kind="debug-restart"
           onClick={() => {
@@ -971,18 +1308,20 @@ function Frame() {
             }
           }}
         />
-      </div>
-      <Show
-        when={!loadingMessage()}
-        fallback={
-          <div class={clsx(styles.suspenseMessage, styles.frame)}>
-            <LoaderAnimation /> {loadingMessage()}
-          </div>
-        }
-      >
-        <iframe src={solidlab.baseUrl() + solidlab.route()} class={styles.frame} />
-      </Show>
-    </Split.Pane>
+      </Split.Pane>
+      <Split.Pane class={clsx(styles.pane, styles.framePane)}>
+        <Show
+          when={!loadingMessage()}
+          fallback={
+            <div class={clsx(styles.suspenseMessage, styles.frame)}>
+              <LoaderAnimation /> {loadingMessage()}
+            </div>
+          }
+        >
+          <iframe src={solidlab.baseUrl() + solidlab.route()} class={styles.frame} />
+        </Show>
+      </Split.Pane>
+    </>
   )
 }
 
@@ -1080,7 +1419,7 @@ export function SolidLab() {
 
   const [packagesInstalled] = createResource(webContainer, async container => {
     container.on('server-ready', (port, url) => {
-      console.log('port is ', port)
+      console.info('port is ', port)
       setBaseUrl(url)
     })
 
