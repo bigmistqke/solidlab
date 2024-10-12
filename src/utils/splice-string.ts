@@ -1,4 +1,9 @@
-export function spliceString(str: string, start: number, deleteCount: number, insert: string = ''): string {
+export function spliceString(
+  str: string,
+  start: number,
+  deleteCount: number,
+  insert: string = '',
+): string {
   // Ensure the start index is within the bounds of the string
   if (start < 0) {
     start = str.length + start

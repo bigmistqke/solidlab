@@ -8,7 +8,7 @@ export function composeComment(comment: string, indentation: string) {
   return `/** 
 ${comment
   .split('\n')
-  .map((line) => `${indentation} * ${line}`)
+  .map(line => `${indentation} * ${line}`)
   .join('\n')}
 ${indentation} */`
 }
