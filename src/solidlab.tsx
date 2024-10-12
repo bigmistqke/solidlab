@@ -349,6 +349,8 @@ export function SolidexDialog() {
                 class={styles.searchIcon}
               />
             </div>
+          </div>
+          <div class={styles.solidexDialogBody}>
             <div class={styles.searchLabels} style={{ 'flex-wrap': 'nowrap' }}>
               <For each={categories}>
                 {({ category, amount }) => {
@@ -374,25 +376,25 @@ export function SolidexDialog() {
                 }}
               </For>
             </div>
-          </div>
-          <Show when={results()!.length > 0}>
             <div class={styles.searchResults}>
-              <div />
-              <Index each={results()}>
-                {(result, index) => {
-                  return (
-                    <>
-                      <SolidexResult {...result()} activeLabels={activeLabels()} />
-                      <Show when={index !== results().length - 1}>
-                        <div class={styles.separator} />
-                      </Show>
-                    </>
-                  )
-                }}
-              </Index>
-              <div />
+              <Show when={results()!.length > 0}>
+                <div />
+                <Index each={results()}>
+                  {(result, index) => {
+                    return (
+                      <>
+                        <SolidexResult {...result()} activeLabels={activeLabels()} />
+                        <Show when={index !== results().length - 1}>
+                          <div class={styles.separator} />
+                        </Show>
+                      </>
+                    )
+                  }}
+                </Index>
+                <div />
+              </Show>
             </div>
-          </Show>
+          </div>
         </Dialog.Content>
       </div>
     </Dialog.Portal>
@@ -462,30 +464,30 @@ function SolidexResult(props: {
       <div ref={description!} class={styles.searchResultDescription}>
         {props.description}
       </div>
-      <Show when={!visibleSubPackages()}>
-        <div class={styles.searchResultBottomBar}>
-          <div class={styles.searchLabels}>
-            <Index each={props.categories}>
-              {category => (
-                <div
-                  class={clsx(
-                    styles.searchLabel,
-                    styles[category()],
-                    !props.activeLabels.includes(category()) && styles.inactive,
-                  )}
-                >
-                  {category()}
-                </div>
-              )}
-            </Index>
-          </div>
+      <div class={styles.searchResultBottomBar}>
+        <div class={styles.searchLabels}>
+          <Index each={props.categories}>
+            {category => (
+              <div
+                class={clsx(
+                  styles.searchLabel,
+                  styles[category()],
+                  !props.activeLabels.includes(category()) && styles.inactive,
+                )}
+              >
+                {category()}
+              </div>
+            )}
+          </Index>
+        </div>
+        <Show when={!visibleSubPackages()}>
           <div class={styles.searchLabels}>
             <Index each={props.keywords}>
               {keyword => <div class={styles.searchLabel}>{keyword()}</div>}
             </Index>
           </div>
-        </div>
-      </Show>
+        </Show>
+      </div>
 
       <Show when={visibleSubPackages() && Array.isArray(props.package) && props.package}>
         {subPackage => (
